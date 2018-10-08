@@ -15,7 +15,7 @@
         },
         {
             "label": "make",
-            "command": "make -j 8 && ${workspaceRoot}/build/spaceinvaders/spaceinvaders",
+            "command": "make -j 8 && ${workspaceRoot}/build/doublegrit/doublegrit",
             "group": "build",
             "problemMatcher": []
         }

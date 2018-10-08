@@ -8,11 +8,14 @@
 #include <irrKlang.h>
 using namespace irrklang;
 
-#include "sprite_renderer.hpp"
-#include "projectile_manager.hpp"
-#include "invaders_manager.hpp"
 #include "game_object.hpp"
+#include "resource_manager.hpp"
+#include "gritty_renderer.hpp"
 #include "text_renderer.hpp"
+#include "post_processor.hpp"
+#include "pixelator.hpp"
+#include "level.hpp"
+#include "camera.hpp"
 
 enum GameState
 {
@@ -22,15 +25,6 @@ enum GameState
     GAME_WIN,
     GAME_LOST
 };
-
-const glm::vec2 LASERCANNON_SIZE(32, 16);
-const GLfloat   LASERCANNON_VELOCITY(500.0f);
-const glm::vec2 LASER_VELOCITY(0.0f, -450.0f);
-const glm::vec2 BOMB_VELOCITY(0.0f, 300.0f);
-const GLfloat   SCREEN_PADDING(16.0f);
-const GLuint    BOMB_SPAWN_CHANCE(1500);
-const GLuint    INVADERS_COUNT(55);
-const GLuint    INVADERS_COLUMNS(11);
 
 class Game
 {
@@ -43,15 +37,13 @@ class Game
         ~Game();
 
         void Init();
+        void Reset();
+
         void ProcessInput(GLfloat deltaTime);
+        void ProcessMouse(GLfloat xpos, GLfloat ypos);
+
         void Update(GLfloat deltaTime);
         void Render(GLfloat deltaTime);
-        void DoCollisions();
-        void SpawnBombs();
-
-        void InitPlayer();
-        void InitBarriers();
-        void Reset();
 
         void SetFramebufferSize(GLuint framebufferWidth, GLuint framebufferHeight)
             { this->FramebufferWidth = framebufferWidth; this->FramebufferHeight = framebufferHeight; };
@@ -59,16 +51,22 @@ class Game
     private:
         GLFWwindow *Window;
         GLuint WindowWidth, WindowHeight, FramebufferWidth, FramebufferHeight;
+        GLfloat lastMouseX, lastMouseY;
+        bool firstMouse;
 
-        SpriteRenderer          *Renderer;
-        TextRenderer            *Text;
-        ISoundEngine            *SoundEngine;
-        ProjectileManager       *Projectiles;
-        InvadersManager         *Invaders;
-        GameObject              *PlayerLaserCannon;
-        std::vector<GameObject> Barriers;
-        GLuint                  PlayerLives;
-        GLuint                  PlayerScore;
+        GrittyRenderer *Renderer;
+        SpriteRenderer *Sprite;
+        Pixelator      *Pixel;
+        TextRenderer   *Text;
+        ISoundEngine   *SoundEngine;
+
+        Camera         *FreeCam;
+        glm::vec3      CamPosition;
+        GameObject     *Player;
+        Level          *CurrentLevel;
+
+        void InitPlayer();
+        void UpdateCamera();
 };
 
 #endif

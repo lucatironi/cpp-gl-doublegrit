@@ -22,9 +22,9 @@ Shader ResourceManager::GetShader(std::string name)
     return Shaders[name];
 }
 
-Texture2D ResourceManager::LoadTexture(const GLchar *file, GLboolean alpha, std::string name)
+Texture2D ResourceManager::LoadTexture(const GLchar *file, GLboolean alpha, std::string name, GLuint wrap, GLuint filterMin, GLuint filterMax)
 {
-    Textures[name] = loadTextureFromFile(file, alpha);
+    Textures[name] = loadTextureFromFile(file, alpha, wrap, filterMin, filterMax);
     return Textures[name];
 }
 
@@ -87,7 +87,7 @@ Shader ResourceManager::loadShaderFromFile(const GLchar *vShaderFile, const GLch
     return shader;
 }
 
-Texture2D ResourceManager::loadTextureFromFile(const GLchar *file, GLboolean alpha)
+Texture2D ResourceManager::loadTextureFromFile(const GLchar *file, GLboolean alpha, GLuint wrap, GLuint filterMin, GLuint filterMax)
 {
     // Create Texture object
     Texture2D texture;
@@ -96,10 +96,15 @@ Texture2D ResourceManager::loadTextureFromFile(const GLchar *file, GLboolean alp
         texture.Internal_Format = GL_RGBA;
         texture.Image_Format = GL_RGBA;
     }
+    texture.Wrap_S = wrap;
+    texture.Wrap_T = wrap;
+    texture.Filter_Min = filterMin;
+    texture.Filter_Max = filterMax;
     // Load image
-    int width, height, nrChannels;
-    unsigned char *image = stbi_load(file, &width, &height, &nrChannels, 0);
+    int width, height, channels;
+    unsigned char *image = stbi_load(file, &width, &height, &channels, 0);
     // Now generate texture
     texture.Generate(width, height, image);
+    stbi_image_free(image);
     return texture;
 }

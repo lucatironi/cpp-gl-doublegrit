@@ -1,1 +1,1 @@
-# Space Invaders clone with C++ and OpenGL 3.3
+# Twin Sticks Shooter Game with C++ and OpenGL 3.3

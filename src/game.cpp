@@ -1,7 +1,9 @@
 #include <sstream>
 
 #include "game.hpp"
-#include "resource_manager.hpp"
+
+bool pixelate = true;
+bool freeCam = false;
 
 Game::Game(GLFWwindow *window, GLuint windowWidth, GLuint windowHeight, GLuint framebufferWidth, GLuint framebufferHeight)
     : State(GAME_MENU),
@@ -11,41 +13,53 @@ Game::Game(GLFWwindow *window, GLuint windowWidth, GLuint windowHeight, GLuint f
       WindowWidth(windowWidth),
       WindowHeight(windowHeight),
       FramebufferWidth(framebufferWidth),
-      FramebufferHeight(framebufferHeight),
-      PlayerLives(3),
-      PlayerScore(0)
+      FramebufferHeight(framebufferHeight)
 {
+    this->lastMouseX = windowWidth / 2.0f;
+    this->lastMouseY = windowHeight / 2.0f;
+    this->firstMouse = true;
 }
 
 Game::~Game()
 {
     delete this->Renderer;
+    delete this->Sprite;
     delete this->Text;
-    delete this->Projectiles;
-    delete this->Invaders;
+    delete this->Pixel;
+    delete this->FreeCam;
     this->SoundEngine->drop();
 }
 
 void Game::Init()
 {
     // Load shaders
-    ResourceManager::LoadShader("../src/shaders/sprite.vs", "../src/shaders/sprite.fs", nullptr, "sprite");
+    ResourceManager::LoadShader("../src/shaders/gritty.vs", "../src/shaders/gritty.fs", nullptr, "gritty");
     ResourceManager::LoadShader("../src/shaders/text.vs", "../src/shaders/text.fs", nullptr, "text");
-    // Configure shaders
-    glm::mat4 projection = glm::ortho(0.0f, static_cast<GLfloat>(this->WindowWidth), static_cast<GLfloat>(this->WindowHeight), 0.0f, -1.0f, 1.0f);
-    ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", projection);
-    ResourceManager::GetShader("text").Use().SetMatrix4("projection", projection);
+
+    // Configure Text Renderer
+    glm::mat4 ortho = glm::ortho(0.0f, static_cast<GLfloat>(this->WindowWidth), static_cast<GLfloat>(this->WindowHeight), 0.0f, -1.0f, 1.0f);
+    ResourceManager::GetShader("text").Use().SetMatrix4("projection", ortho);
     ResourceManager::GetShader("text").Use().SetInteger("text", 0);
-    // Set render-specific controls
-    this->Renderer = new SpriteRenderer(ResourceManager::GetShader("sprite"));
     this->Text = new TextRenderer(ResourceManager::GetShader("text"));
     this->Text->LoadFont("../assets/PressStart2P-Regular.ttf", 16);
 
-    // Initalize game objects
-    this->Projectiles = new ProjectileManager(25);
-    this->Invaders = new InvadersManager(INVADERS_COUNT, INVADERS_COLUMNS);
-    this->InitPlayer();
-    this->InitBarriers();
+    // Set render-specific controls
+    this->Sprite = new SpriteRenderer(ResourceManager::GetShader("gritty"));
+    this->Renderer = new GrittyRenderer(ResourceManager::GetShader("gritty"));
+    this->Pixel = new Pixelator(this->WindowWidth, this->WindowHeight, this->FramebufferWidth, this->FramebufferHeight);
+    // Load Tilemap Texture
+    Texture2D tiles = ResourceManager::LoadTexture("../assets/q2.png", GL_TRUE, "tiles", GL_CLAMP_TO_EDGE, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST);
+
+    // Initalize level and game objects
+    this->CurrentLevel = new Level("../assets/l1.png", ResourceManager::GetShader("gritty"));
+
+    // Configure Camera
+    this->Player = new GameObject();
+    this->Player->Sprite = ResourceManager::GetTexture("tiles");
+    this->Player->Position = this->CurrentLevel->PlayerStartPosition;
+
+    this->FreeCam = new Camera(this->Player->Position, glm::vec3(0.0f, 1.0f, 0.0f));
+    UpdateCamera();
 
     // Initialize other objects
     this->SoundEngine = createIrrKlangDevice();
@@ -96,29 +110,49 @@ void Game::ProcessInput(GLfloat deltaTime)
     }
     if (this->State == GAME_ACTIVE)
     {
-        GLfloat deltaSpace = LASERCANNON_VELOCITY * deltaTime;
-        // A D move player laser cannon
-        if (this->Keys[GLFW_KEY_A]) // Left
+        if (freeCam)
         {
-            if (this->PlayerLaserCannon->Position.x >= SCREEN_PADDING)
-                this->PlayerLaserCannon->Position.x -= deltaSpace;
+            if (this->Keys[GLFW_KEY_W]) // Forward
+                this->FreeCam->ProcessKeyboard(FORWARD, deltaTime);
+            if (this->Keys[GLFW_KEY_S]) // Backward
+                this->FreeCam->ProcessKeyboard(BACKWARD, deltaTime);
+            if (this->Keys[GLFW_KEY_A]) // Left
+                this->FreeCam->ProcessKeyboard(LEFT, deltaTime);
+            if (this->Keys[GLFW_KEY_D]) // Right
+                this->FreeCam->ProcessKeyboard(RIGHT, deltaTime);
+            if (this->Keys[GLFW_KEY_Q]) // Down
+                this->FreeCam->ProcessKeyboard(DOWN, deltaTime);
+            if (this->Keys[GLFW_KEY_E]) // Up
+                this->FreeCam->ProcessKeyboard(UP, deltaTime);
         }
-        if (this->Keys[GLFW_KEY_D]) // Right
+        else
         {
-            if (this->PlayerLaserCannon->Position.x <= this->WindowWidth - this->PlayerLaserCannon->Size.x - SCREEN_PADDING)
-                this->PlayerLaserCannon->Position.x += deltaSpace;
+            GLfloat deltaSpace = 4.0f * deltaTime;
+            if (this->Keys[GLFW_KEY_W]) // Forward
+                this->Player->Position.z -= deltaSpace;
+            if (this->Keys[GLFW_KEY_S]) // Backward
+                this->Player->Position.z += deltaSpace;
+            if (this->Keys[GLFW_KEY_A]) // Left
+                this->Player->Position.x -= deltaSpace;
+            if (this->Keys[GLFW_KEY_D]) // Right
+                this->Player->Position.x += deltaSpace;
         }
-        // SPACE fires lasers
+
         if (this->Keys[GLFW_KEY_SPACE] && !this->KeysProcessed[GLFW_KEY_SPACE])
         {
-            // Add projectile to list
-            glm::vec2 laserSpawnPoint = glm::vec2(
-                this->PlayerLaserCannon->Position.x + LASERCANNON_SIZE.x / 2,
-                this->PlayerLaserCannon->Position.y
-            );
-            this->Projectiles->FireLaser(laserSpawnPoint, LASER_VELOCITY); // Up!
-            this->SoundEngine->play2D("../assets/laser.wav", GL_FALSE);
             this->KeysProcessed[GLFW_KEY_SPACE] = GL_TRUE;
+        }
+        // 1 Toggle Pixelate
+        if (this->Keys[GLFW_KEY_1] && !this->KeysProcessed[GLFW_KEY_1])
+        {
+            pixelate = !pixelate;
+            this->KeysProcessed[GLFW_KEY_1] = GL_TRUE;
+        }
+        // 2 Toggle free camera
+        if (this->Keys[GLFW_KEY_2] && !this->KeysProcessed[GLFW_KEY_2])
+        {
+            freeCam = !freeCam;
+            this->KeysProcessed[GLFW_KEY_2] = GL_TRUE;
         }
         // ESC pauses game
         if (this->Keys[GLFW_KEY_ESCAPE] && !this->KeysProcessed[GLFW_KEY_ESCAPE])
@@ -129,59 +163,54 @@ void Game::ProcessInput(GLfloat deltaTime)
     }
 }
 
+void Game::ProcessMouse(GLfloat xpos, GLfloat ypos)
+{
+    if (this->firstMouse)
+    {
+        this->lastMouseX = xpos;
+        this->lastMouseY = ypos;
+        this->firstMouse = false;
+    }
+
+    float xoffset = xpos - this->lastMouseX;
+    float yoffset = this->lastMouseY - ypos; // reversed since y-coordinates go from bottom to top
+
+    this->lastMouseX = xpos;
+    this->lastMouseY = ypos;
+
+    if (this->State == GAME_ACTIVE)
+    {
+        this->FreeCam->ProcessMouseMovement(xoffset, yoffset);
+    }
+}
+
 void Game::Update(GLfloat deltaTime)
 {
     if (this->State == GAME_ACTIVE)
     {
-        this->Projectiles->Update(deltaTime, this->WindowHeight);
-        this->Invaders->Update(deltaTime, this->WindowWidth, this->WindowHeight);
-        this->SpawnBombs();
-        this->DoCollisions();
+        UpdateCamera();
     }
-    if (this->Invaders->AllDead())
-        this->State = GAME_WIN;
-
-    if (this->PlayerLives == 0 ||
-        this->Invaders->ReachedBoundary(this->WindowHeight - 64.0f - LASERCANNON_SIZE.y - SCREEN_PADDING * 2 - INVADER_SIZE.y))
-        this->State = GAME_LOST;
 }
 
 void Game::Render(GLfloat deltaTime)
 {
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     if (this->State == GAME_ACTIVE || this->State == GAME_PAUSED ||  this->State == GAME_MENU || this->State == GAME_WIN)
     {
-        this->PlayerLaserCannon->Draw(*Renderer);
-        this->Projectiles->Draw(*Renderer);
-        this->Invaders->Draw(*Renderer);
-        for (GameObject &barrier : this->Barriers)
-            barrier.Draw(*Renderer);
+        if (pixelate)
+            Pixel->BeginRender();
+        this->CurrentLevel->Draw(ResourceManager::GetTexture("tiles"));
+        this->Player->Draw(*Sprite);
+        if (pixelate)
+            Pixel->EndRender();
     }
 
-    if (this->State == GAME_PAUSED)
-        Text->RenderText("Press ENTER to resume or ESC to go to the menu", 110.0f, SCREEN_PADDING, 0.75f);
+    if (this->State != GAME_ACTIVE)
+        Text->RenderText("PAUSED", 4.0f, 4.0f, 0.5f);
 
-    if (this->State == GAME_MENU)
-        Text->RenderText("Press ENTER to start or ESC to quit", 190.0f, SCREEN_PADDING, 0.75f);
-
-    if (this->State == GAME_WIN)
-        Text->RenderText("You WON!!!", 320.0f, this->WindowHeight / 2 - 20.0f, 1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-
-    if (this->State == GAME_LOST)
-        Text->RenderText("You LOST...", 320.0f, this->WindowHeight / 2 - 20.0f, 1.0f, glm::vec3(1.0f, 0.0f, 0.0f));
-
-    if (this->State == GAME_WIN || this->State == GAME_LOST)
-        Text->RenderText("Press ENTER to go to the menu", 220.0f, this->WindowHeight / 2, 0.75f);
-
-    // Render Score and Lives
-    std::stringstream score;
-    score << "Score: " << this->PlayerScore;
-    Text->RenderText(score.str(), 8.0f, this->WindowHeight - SCREEN_PADDING - 8.0f, 1.0f);
-
-    std::stringstream lives;
-    lives << "Lives: " << this->PlayerLives;
-    Text->RenderText(lives.str(), this->WindowWidth - 140.0f, this->WindowHeight - SCREEN_PADDING - 8.0f, 1.0f);
-
-    // Render FPS
+    // Render FPS Counter
     std::stringstream fps;
     fps << (int)(1 / deltaTime);
     Text->RenderText(fps.str(), this->WindowWidth - 30.0f, 4.0f, 0.5f);
@@ -189,122 +218,27 @@ void Game::Render(GLfloat deltaTime)
 
 void Game::Reset()
 {
-    this->InitPlayer();
-    this->InitBarriers();
-    this->Invaders->Init();
-    this->Projectiles->Init();
+    InitPlayer();
 }
 
 void Game::InitPlayer()
 {
-    this->PlayerLives = 3;
-    this->PlayerScore = 0;
 
-    glm::vec2 playerPosition = glm::vec2(
-        this->WindowWidth / 2 - LASERCANNON_SIZE.x / 2,
-        this->WindowHeight - LASERCANNON_SIZE.y - SCREEN_PADDING * 2);
-    this->PlayerLaserCannon = new GameObject(playerPosition, LASERCANNON_SIZE, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f));
 }
 
-void Game::InitBarriers()
+void Game::UpdateCamera()
 {
-    this->Barriers.clear();
-    GLfloat offset = 0;
-    for (GLuint i = 0; i < 4; ++i)
+    this->CamPosition = this->Player->Position + glm::vec3(0.0f, 4.0f, 4.0f);
+    glm::mat4 perspective = glm::perspective(glm::radians(90.0f), static_cast<GLfloat>(this->WindowWidth) / static_cast<GLfloat>(this->WindowHeight), 0.1f, 100.0f);
+    glm::mat4 view;
+    if(freeCam)
     {
-        offset += 146.0f;
-        glm::vec2 barrierPosition(offset, this->WindowHeight - 64.0f - LASERCANNON_SIZE.y - SCREEN_PADDING * 2);
-        this->Barriers.push_back(GameObject(barrierPosition, glm::vec2(64.0f, 32.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+        view = this->FreeCam->GetViewMatrix();
     }
-}
-
-GLboolean ShouldSpawn(GLuint chance)
-{
-    GLuint random = rand() % chance;
-    return random == 0;
-}
-
-void Game::SpawnBombs()
-{
-    for (Invader &invader : Invaders->fleet)
+    else
     {
-        if (!invader.Destroyed && ShouldSpawn(BOMB_SPAWN_CHANCE))
-        {
-            glm::vec2 bombSpawnPoint = glm::vec2(
-                invader.Position.x + INVADER_SIZE.x / 2,
-                invader.Position.y + INVADER_SIZE.y);
-            this->Projectiles->FireBomb(bombSpawnPoint, BOMB_VELOCITY); // Down!
-        }
+        view = glm::lookAt(this->CamPosition, this->Player->Position, glm::vec3(0.0f, 1.0f, 0.0f));
     }
-}
-
-// Collision detection
-GLboolean CheckCollision(GameObject &one, GameObject &two);
-
-void Game::DoCollisions()
-{
-    for (Invader &invader : Invaders->fleet)
-    {
-        if (!invader.Destroyed)
-        {
-            for (Projectile &laser : Projectiles->lasers)
-            {
-                if (laser.Life > 0.0f && CheckCollision(laser, invader))
-                {
-                    this->PlayerScore += 80;
-                    invader.Destroyed = GL_TRUE;
-                    laser.Life = 0.0f;
-                }
-            }
-        }
-    }
-    for (Projectile &bomb : Projectiles->bombs)
-    {
-        if (bomb.Life > 0.0f && CheckCollision(bomb, *this->PlayerLaserCannon))
-        {
-            this->SoundEngine->play2D("../assets/hit.wav", GL_FALSE);
-            this->PlayerLives--;
-            bomb.Life = 0.0f;
-        }
-        for (GameObject &barrier : this->Barriers)
-        {
-            if (bomb.Life > 0.0f && CheckCollision(bomb, barrier))
-            {
-                if (barrier.Size.x > 0)
-                {
-                    barrier.Position.x += 1.0f;
-                    barrier.Size.x -= 2.0f;
-                }
-                bomb.Life = 0.0f;
-            }
-        }
-    }
-
-    for (Projectile &laser : Projectiles->lasers)
-    {
-        for (GameObject &barrier : this->Barriers)
-        {
-            if (laser.Life > 0.0f && CheckCollision(laser, barrier))
-            {
-                if (barrier.Size.x > 0)
-                {
-                    barrier.Position.x += 1.0f;
-                    barrier.Size.x -= 2.0f;
-                }
-                laser.Life = 0.0f;
-            }
-        }
-    }
-}
-
-GLboolean CheckCollision(GameObject &one, GameObject &two) // AABB - AABB collision
-{
-    // Collision x-axis?
-    bool collisionX = one.Position.x + one.Size.x >= two.Position.x &&
-                      two.Position.x + two.Size.x >= one.Position.x;
-    // Collision y-axis?
-    bool collisionY = one.Position.y + one.Size.y >= two.Position.y &&
-                      two.Position.y + two.Size.y >= one.Position.y;
-    // Collision only if on both axes
-    return collisionX && collisionY;
+    ResourceManager::GetShader("gritty").Use().SetMatrix4("view", view);
+    ResourceManager::GetShader("gritty").Use().SetMatrix4("projection", perspective);
 }

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(spaceinvaders)
+project(doublegrit)
 
 option(GLFW_BUILD_DOCS OFF)
 option(GLFW_BUILD_EXAMPLES OFF)
@@ -36,6 +36,9 @@ endif()
 add_library(irrKlang STATIC IMPORTED)
 set_target_properties(irrKlang PROPERTIES IMPORTED_LOCATION ${irrKlang_location})
 
+find_package(Freetype REQUIRED)
+include_directories(${FREETYPE_INCLUDE_DIRS})
+
 file(GLOB VENDORS_SOURCES vendor/glad/src/glad.c)
 file(GLOB PROJECT_HEADERS src/*.hpp)
 file(GLOB PROJECT_SOURCES src/*.cpp)
@@ -56,7 +59,7 @@ add_definitions(-DGLFW_INCLUDE_NONE
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${PROJECT_HEADERS}
                                ${PROJECT_SHADERS} ${PROJECT_CONFIGS}
                                ${VENDORS_SOURCES})
-target_link_libraries(${PROJECT_NAME} glfw irrKlang freetype
-                      ${GLFW_LIBRARIES} ${GLAD_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} glfw irrKlang
+                      ${GLFW_LIBRARIES} ${GLAD_LIBRARIES} ${FREETYPE_LIBRARIES})
 set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${PROJECT_NAME})

@@ -7,12 +7,15 @@
 #include "resource_manager.hpp"
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
+void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 
 const unsigned int WindowWidth  = 800;
 const unsigned int WindowHeight = 600;
 
-Game *SpaceInvaders;
+const float framebufferRatio = 0.3333;
+
+Game *DoubleGrit;
 
 int main()
 {
@@ -25,7 +28,7 @@ int main()
 #endif
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    GLFWwindow *window = glfwCreateWindow(WindowWidth, WindowHeight, "Space Invaders", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(WindowWidth, WindowHeight, "Double Grit", nullptr, nullptr);
     if (window == nullptr)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -34,8 +37,12 @@ int main()
     }
     glfwMakeContextCurrent(window);
     glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     // glfwSwapInterval(0); // Disable vsync
+
+    // tell GLFW to capture our mouse
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -45,12 +52,10 @@ int main()
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_DEPTH_TEST);
 
-    int framebufferWidth, framebufferHeight;
-    glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
-
-    SpaceInvaders = new Game(window, WindowWidth, WindowHeight, framebufferWidth, framebufferHeight);
-    SpaceInvaders->Init();
+    DoubleGrit = new Game(window, WindowWidth, WindowHeight, WindowWidth * framebufferRatio, WindowHeight * framebufferRatio);
+    DoubleGrit->Init();
 
     GLfloat deltaTime = 0.0f;
     GLfloat lastFrame = 0.0f;
@@ -60,16 +65,12 @@ int main()
         GLfloat currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+
         glfwPollEvents();
 
-        SpaceInvaders->ProcessInput(deltaTime);
-
-        SpaceInvaders->Update(deltaTime);
-
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        SpaceInvaders->Render(deltaTime);
+        DoubleGrit->ProcessInput(deltaTime);
+        DoubleGrit->Update(deltaTime);
+        DoubleGrit->Render(deltaTime);
 
         glfwSwapBuffers(window);
     }
@@ -85,13 +86,18 @@ void key_callback(GLFWwindow* /* window */, int key, int /* scancode */, int act
     if (key >= 0 && key < 1024)
     {
         if (action == GLFW_PRESS)
-            SpaceInvaders->Keys[key] = GL_TRUE;
+            DoubleGrit->Keys[key] = GL_TRUE;
         else if (action == GLFW_RELEASE)
         {
-            SpaceInvaders->Keys[key] = GL_FALSE;
-            SpaceInvaders->KeysProcessed[key] = GL_FALSE;
+            DoubleGrit->Keys[key] = GL_FALSE;
+            DoubleGrit->KeysProcessed[key] = GL_FALSE;
         }
     }
+}
+
+void mouse_callback(GLFWwindow *window, double xpos, double ypos)
+{
+    DoubleGrit->ProcessMouse(xpos, ypos);
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int, int)
@@ -99,5 +105,5 @@ void framebuffer_size_callback(GLFWwindow *window, int, int)
     int framebufferWidth, framebufferHeight;
     glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
     glViewport(0, 0, framebufferWidth, framebufferHeight);
-    SpaceInvaders->SetFramebufferSize(framebufferWidth, framebufferHeight);
+    DoubleGrit->SetFramebufferSize(framebufferWidth, framebufferHeight);
 }
