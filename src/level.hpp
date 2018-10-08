@@ -15,12 +15,12 @@ class Level
     Level(const GLchar *file, Shader shader);
     ~Level();
 
+    Shader LevelShader;
     glm::vec3 PlayerStartPosition;
     void Draw(Texture2D texture);
 
   private:
     GLuint VAO;
-    Shader shader;
     std::vector<GLfloat> vertices;
 
     const GLfloat tileFraction = 16.0f / 1024.0f;
@@ -36,6 +36,8 @@ class Level
                   GLuint tile);
     void pushFloor(GLfloat x, GLfloat z);
     void pushBlock(GLfloat x, GLfloat z);
+    int randomFloorTile();
+    int randomWallTile();
 };
 
 #endif

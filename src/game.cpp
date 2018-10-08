@@ -228,17 +228,25 @@ void Game::InitPlayer()
 
 void Game::UpdateCamera()
 {
-    this->CamPosition = this->Player->Position + glm::vec3(0.0f, 4.0f, 4.0f);
+    this->CamPosition = this->Player->Position + glm::vec3(0.0f, 3.0f, 2.0f);
     glm::mat4 perspective = glm::perspective(glm::radians(90.0f), static_cast<GLfloat>(this->WindowWidth) / static_cast<GLfloat>(this->WindowHeight), 0.1f, 100.0f);
     glm::mat4 view;
+    glm::vec3 lightPos, lightColor;
+
     if(freeCam)
     {
         view = this->FreeCam->GetViewMatrix();
+        lightPos = this->FreeCam->Position;
+        lightColor = glm::vec3(0.5f, 0.5f, 0.5f);
     }
     else
     {
         view = glm::lookAt(this->CamPosition, this->Player->Position, glm::vec3(0.0f, 1.0f, 0.0f));
+        lightPos = this->Player->Position;
+        lightColor = glm::vec3(1.0f, 0.5f, 0.0f);
     }
     ResourceManager::GetShader("gritty").Use().SetMatrix4("view", view);
     ResourceManager::GetShader("gritty").Use().SetMatrix4("projection", perspective);
+    ResourceManager::GetShader("gritty").Use().SetVector3f("lightPos", lightPos);
+    ResourceManager::GetShader("gritty").Use().SetVector3f("lightColor", lightColor);
 }

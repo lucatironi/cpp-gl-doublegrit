@@ -4,7 +4,7 @@
 
 Level::Level(const GLchar *file, Shader shader)
 {
-    this->shader = shader;
+    this->LevelShader = shader;
     this->load(file);
     this->initRenderData();
 }
@@ -16,10 +16,7 @@ Level::~Level()
 
 void Level::Draw(Texture2D texture)
 {
-    this->shader.Use();
-
-    this->shader.SetVector3f("lightColor", 1.0f, 1.0f, 1.0f);
-    this->shader.SetVector3f("lightPos", this->PlayerStartPosition);
+    this->LevelShader.Use();
 
     glActiveTexture(GL_TEXTURE0);
     texture.Bind();
@@ -55,7 +52,7 @@ void Level::pushFloor(GLfloat x, GLfloat z)
                    x, 0.0f, z + QUAD_SIZE,
                    x + QUAD_SIZE, 0.0f, z + QUAD_SIZE,
                    0.0f, 1.0f, 0.0f,
-                   1);
+                   randomFloorTile());
 }
 
 void Level::pushBlock(GLfloat x, GLfloat z)
@@ -68,35 +65,35 @@ void Level::pushBlock(GLfloat x, GLfloat z)
                    x, y, z + QUAD_SIZE,
                    x + QUAD_SIZE, y, z + QUAD_SIZE,
                    0.0f, 1.0f, 0.0f,
-                   3);
+                   0);
     // right
     this->pushQuad(x + QUAD_SIZE, y, z,
                    x + QUAD_SIZE, y, z + QUAD_SIZE,
                    x + QUAD_SIZE, 0.0f, z,
                    x + QUAD_SIZE, 0.0f, z + QUAD_SIZE,
                    1.0f, 0.0f, 0.0f,
-                   7);
+                   randomWallTile());
     // front
     this->pushQuad(x, y, z + QUAD_SIZE,
                    x + QUAD_SIZE, y, z + QUAD_SIZE,
                    x, 0.0f, z + QUAD_SIZE,
                    x + QUAD_SIZE, 0.0f, z + QUAD_SIZE,
                    0.0f, 0.0f, 1.0f,
-                   9);
+                   randomWallTile());
     // left
     this->pushQuad(x, y, z,
                    x, y, z + QUAD_SIZE,
                    x, 0.0f, z,
                    x, 0.0f, z + QUAD_SIZE,
                    -1.0f, 0.0f, 0.0f,
-                   10);
+                   randomWallTile());
     // back
     this->pushQuad(x, y, z,
                    x + QUAD_SIZE, y, z,
                    x, 0.0f, z,
                    x + QUAD_SIZE, 0.0f, z,
                    0.0f, 0.0f, -1.0f,
-                   11);
+                   randomWallTile());
 }
 
 void Level::load(const GLchar *file)
@@ -123,7 +120,7 @@ void Level::load(const GLchar *file)
                 pushFloor(x * QUAD_SIZE, y * QUAD_SIZE);
                 break;
             case 149: // green, player
-                this->PlayerStartPosition = glm::vec3(x + QUAD_SIZE / 2.0f, QUAD_SIZE / 2.0f, y + QUAD_SIZE / 2.0f);
+                this->PlayerStartPosition = glm::vec3(x + QUAD_SIZE / 2.0f, 0.8f, y + QUAD_SIZE / 2.0f);
                 pushFloor(x * QUAD_SIZE, y * QUAD_SIZE);
                 break;
             case 28: // blue
@@ -161,4 +158,24 @@ void Level::initRenderData()
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+}
+
+int Level::randomFloorTile()
+{
+    const int array[] = {0, 0, 0, 0, 0, 2, 2, 1, 4, 4, 4, 4, 4, 4, 6, 6, 5};
+    return array[rand() % 17];
+}
+
+int Level::randomWallTile()
+{
+    const int chance[] = {0, 1, 2, 3, 4, 5};
+    if (chance[rand() % 6] < 4)
+    {
+        return 7;
+    }
+    else
+    {
+        const int array[] = {7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+        return array[rand() % 10];
+    }
 }

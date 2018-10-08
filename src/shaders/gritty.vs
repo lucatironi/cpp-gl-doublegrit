@@ -14,12 +14,8 @@ uniform vec3 lightColor;
 
 void main()
 {
-    float linear = 0.9;
-    float quadratic = 0.032;
-
     // ambient
     vec3 ambient = vec3(0.3, 0.3, 0.6);
-    ambient += lightColor;
 
     // diffuse
     vec3 norm = normalize(aNormal);
@@ -28,13 +24,10 @@ void main()
 
     // attenuation
     float distance = length(lightPos - aPos);
-    float attenuation = 1.0 / (1.0 + linear * distance + quadratic * (distance * distance));
+    float attenuation = 1.0 / (0.04 * distance);
 
     // combine
-    ambient *= attenuation;
-    diffuse *= attenuation;
-
-    VertexLight = ambient + diffuse;
+    VertexLight = ambient + lightColor * diffuse * attenuation;
     TexCoords = aTexCoords;
     gl_Position = projection * view * vec4(aPos, 1.0);
 }
