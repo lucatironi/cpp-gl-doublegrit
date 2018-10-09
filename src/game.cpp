@@ -1,8 +1,10 @@
 #include <sstream>
+#include <iostream>
 
 #include "game.hpp"
 
 bool pixelate = true;
+bool retro = true;
 bool freeCam = false;
 
 Game::Game(GLFWwindow *window, GLuint windowWidth, GLuint windowHeight, GLuint framebufferWidth, GLuint framebufferHeight)
@@ -48,7 +50,7 @@ void Game::Init()
     this->Renderer = new GrittyRenderer(ResourceManager::GetShader("gritty"));
     this->Pixel = new Pixelator(this->WindowWidth, this->WindowHeight, this->FramebufferWidth, this->FramebufferHeight);
     // Load Tilemap Texture
-    Texture2D tiles = ResourceManager::LoadTexture("../assets/q2.png", GL_TRUE, "tiles", GL_CLAMP_TO_EDGE, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST);
+    ResourceManager::LoadTexture("../assets/q2.png", GL_TRUE, "tiles", GL_CLAMP_TO_EDGE, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST);
 
     // Initalize level and game objects
     this->CurrentLevel = new Level("../assets/l1.png", ResourceManager::GetShader("gritty"));
@@ -148,11 +150,17 @@ void Game::ProcessInput(GLfloat deltaTime)
             pixelate = !pixelate;
             this->KeysProcessed[GLFW_KEY_1] = GL_TRUE;
         }
-        // 2 Toggle free camera
+        // 2 Toggle retro look (256 color palette)
         if (this->Keys[GLFW_KEY_2] && !this->KeysProcessed[GLFW_KEY_2])
         {
-            freeCam = !freeCam;
+            retro = !retro;
             this->KeysProcessed[GLFW_KEY_2] = GL_TRUE;
+        }
+        // 3 Toggle free camera
+        if (this->Keys[GLFW_KEY_3] && !this->KeysProcessed[GLFW_KEY_3])
+        {
+            freeCam = !freeCam;
+            this->KeysProcessed[GLFW_KEY_3] = GL_TRUE;
         }
         // ESC pauses game
         if (this->Keys[GLFW_KEY_ESCAPE] && !this->KeysProcessed[GLFW_KEY_ESCAPE])
@@ -184,7 +192,7 @@ void Game::ProcessMouse(GLfloat xpos, GLfloat ypos)
     }
 }
 
-void Game::Update(GLfloat deltaTime)
+void Game::Update(GLfloat /* deltaTime */)
 {
     if (this->State == GAME_ACTIVE)
     {
@@ -245,8 +253,27 @@ void Game::UpdateCamera()
         lightPos = this->Player->Position;
         lightColor = glm::vec3(1.0f, 0.5f, 0.0f);
     }
+    
+    ResourceManager::GetShader("gritty").Use().SetInteger("freeCam", freeCam);
+    ResourceManager::GetShader("gritty").Use().SetInteger("retro", retro);
     ResourceManager::GetShader("gritty").Use().SetMatrix4("view", view);
     ResourceManager::GetShader("gritty").Use().SetMatrix4("projection", perspective);
     ResourceManager::GetShader("gritty").Use().SetVector3f("lightPos", lightPos);
     ResourceManager::GetShader("gritty").Use().SetVector3f("lightColor", lightColor);
 }
+
+void Game::SetWindowSize(GLuint width, GLuint height)
+{
+    this->WindowWidth = width;
+    this->WindowHeight = height;
+    this->Pixel->WindowWidth = width;
+    this->Pixel->WindowHeight = height;
+};
+
+void Game::SetFramebufferSize(GLuint width, GLuint height)
+{
+    this->FramebufferWidth = width;
+    this->FramebufferHeight = height;
+    this->Pixel->FramebufferWidth = width;
+    this->Pixel->FramebufferHeight = height;
+};

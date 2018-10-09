@@ -14,7 +14,7 @@ SpriteRenderer::~SpriteRenderer()
 }
 
 void SpriteRenderer::DrawSprite(Texture2D texture, glm::vec2 position,
-    glm::vec2 size, GLfloat rotate, glm::vec3 color)
+    glm::vec2 size, GLfloat rotate)
 {
     // Prepare transformations
     glm::mat4 model = glm::mat4(1.0f);

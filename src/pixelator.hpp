@@ -8,10 +8,10 @@
 class Pixelator
 {
   public:
-    GLuint Width, Height;
-    GLuint FrameBufferWidth, FrameBufferHeight;
+    GLuint WindowWidth, WindowHeight;
+    GLuint FramebufferWidth, FramebufferHeight;
 
-    Pixelator(GLuint width, GLuint height, GLuint framebufferwidth, GLuint framebufferheight);
+    Pixelator(GLuint windowWidth, GLuint windowHeight, GLuint framebufferWidth, GLuint framebufferHeight);
     ~Pixelator();
 
     void BeginRender();

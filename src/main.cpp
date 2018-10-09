@@ -8,6 +8,7 @@
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
+void window_size_callback(GLFWwindow *window, int width, int height);
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 
 const unsigned int WindowWidth  = 800;
@@ -28,7 +29,7 @@ int main()
 #endif
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    GLFWwindow *window = glfwCreateWindow(WindowWidth, WindowHeight, "Double Grit", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(WindowWidth, WindowHeight, "Double Grit",  nullptr, nullptr);
     if (window == nullptr)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -38,6 +39,7 @@ int main()
     glfwMakeContextCurrent(window);
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetWindowSizeCallback(window, window_size_callback);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     // glfwSwapInterval(0); // Disable vsync
 
@@ -54,7 +56,10 @@ int main()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);
 
-    DoubleGrit = new Game(window, WindowWidth, WindowHeight, WindowWidth * framebufferRatio, WindowHeight * framebufferRatio);
+    int framebufferWidth, framebufferHeight;
+    glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
+
+    DoubleGrit = new Game(window, framebufferWidth, framebufferHeight, WindowWidth * framebufferRatio, WindowHeight * framebufferRatio);
     DoubleGrit->Init();
 
     GLfloat deltaTime = 0.0f;
@@ -95,15 +100,17 @@ void key_callback(GLFWwindow* /* window */, int key, int /* scancode */, int act
     }
 }
 
-void mouse_callback(GLFWwindow *window, double xpos, double ypos)
+void mouse_callback(GLFWwindow  * /* window */, double xpos, double ypos)
 {
     DoubleGrit->ProcessMouse(xpos, ypos);
 }
 
-void framebuffer_size_callback(GLFWwindow *window, int, int)
+void window_size_callback(GLFWwindow * /* window */, int width, int height)
 {
-    int framebufferWidth, framebufferHeight;
-    glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
-    glViewport(0, 0, framebufferWidth, framebufferHeight);
-    DoubleGrit->SetFramebufferSize(framebufferWidth, framebufferHeight);
+    // DoubleGrit->SetWindowSize(width, height);
+}
+
+void framebuffer_size_callback(GLFWwindow * /* window */, int width, int height)
+{
+    // DoubleGrit->SetFramebufferSize(width, height);
 }

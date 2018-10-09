@@ -45,8 +45,8 @@ class Game
         void Update(GLfloat deltaTime);
         void Render(GLfloat deltaTime);
 
-        void SetFramebufferSize(GLuint framebufferWidth, GLuint framebufferHeight)
-            { this->FramebufferWidth = framebufferWidth; this->FramebufferHeight = framebufferHeight; };
+        void SetWindowSize(GLuint width, GLuint height);
+        void SetFramebufferSize(GLuint width, GLuint height);
 
     private:
         GLFWwindow *Window;
