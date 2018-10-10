@@ -12,6 +12,7 @@ void main()
 {
     vec4 tex = texture(image, TexCoords);
     fragColor = tex * vec4(VertexLight, 1.0);
+
     if (!freeCam)
     {
         float distance = gl_FragCoord.z / gl_FragCoord.w;

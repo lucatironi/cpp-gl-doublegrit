@@ -8,13 +8,11 @@
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
-void window_size_callback(GLFWwindow *window, int width, int height);
-void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 
 const unsigned int WindowWidth  = 800;
 const unsigned int WindowHeight = 600;
 
-const float framebufferRatio = 0.3333;
+const float framebufferRatio = 1.0 / 4.0;
 
 Game *DoubleGrit;
 
@@ -29,7 +27,7 @@ int main()
 #endif
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    GLFWwindow *window = glfwCreateWindow(WindowWidth, WindowHeight, "Double Grit",  nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(WindowWidth, WindowHeight, "Double Grit",  glfwGetPrimaryMonitor(), nullptr);
     if (window == nullptr)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -39,8 +37,6 @@ int main()
     glfwMakeContextCurrent(window);
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetWindowSizeCallback(window, window_size_callback);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     // glfwSwapInterval(0); // Disable vsync
 
     // tell GLFW to capture our mouse
@@ -103,14 +99,4 @@ void key_callback(GLFWwindow* /* window */, int key, int /* scancode */, int act
 void mouse_callback(GLFWwindow  * /* window */, double xpos, double ypos)
 {
     DoubleGrit->ProcessMouse(xpos, ypos);
-}
-
-void window_size_callback(GLFWwindow * /* window */, int width, int height)
-{
-    // DoubleGrit->SetWindowSize(width, height);
-}
-
-void framebuffer_size_callback(GLFWwindow * /* window */, int width, int height)
-{
-    // DoubleGrit->SetFramebufferSize(width, height);
 }

@@ -12,7 +12,6 @@ using namespace irrklang;
 #include "resource_manager.hpp"
 #include "gritty_renderer.hpp"
 #include "text_renderer.hpp"
-#include "post_processor.hpp"
 #include "pixelator.hpp"
 #include "level.hpp"
 #include "camera.hpp"

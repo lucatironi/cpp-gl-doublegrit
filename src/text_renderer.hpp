@@ -6,7 +6,6 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
-#include "texture.hpp"
 #include "shader.hpp"
 
 struct Character
