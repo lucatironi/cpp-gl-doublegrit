@@ -115,17 +115,17 @@ void Game::ProcessInput(GLfloat deltaTime)
         if (freeCam)
         {
             if (this->Keys[GLFW_KEY_W]) // Forward
-                this->FreeCam->ProcessKeyboard(FORWARD, deltaTime);
+                this->FreeCam->ProcessKeyboard(CAMERA_FORWARD, deltaTime);
             if (this->Keys[GLFW_KEY_S]) // Backward
-                this->FreeCam->ProcessKeyboard(BACKWARD, deltaTime);
+                this->FreeCam->ProcessKeyboard(CAMERA_BACKWARD, deltaTime);
             if (this->Keys[GLFW_KEY_A]) // Left
-                this->FreeCam->ProcessKeyboard(LEFT, deltaTime);
+                this->FreeCam->ProcessKeyboard(CAMERA_LEFT, deltaTime);
             if (this->Keys[GLFW_KEY_D]) // Right
-                this->FreeCam->ProcessKeyboard(RIGHT, deltaTime);
+                this->FreeCam->ProcessKeyboard(CAMERA_RIGHT, deltaTime);
             if (this->Keys[GLFW_KEY_Q]) // Down
-                this->FreeCam->ProcessKeyboard(DOWN, deltaTime);
+                this->FreeCam->ProcessKeyboard(CAMERA_DOWN, deltaTime);
             if (this->Keys[GLFW_KEY_E]) // Up
-                this->FreeCam->ProcessKeyboard(UP, deltaTime);
+                this->FreeCam->ProcessKeyboard(CAMERA_UP, deltaTime);
         }
         else
         {
@@ -253,7 +253,7 @@ void Game::UpdateCamera()
         lightPos = this->Player->Position;
         lightColor = glm::vec3(1.0f, 0.5f, 0.0f);
     }
-    
+
     ResourceManager::GetShader("gritty").Use().SetInteger("freeCam", freeCam);
     ResourceManager::GetShader("gritty").Use().SetInteger("retro", retro);
     ResourceManager::GetShader("gritty").Use().SetMatrix4("view", view);
