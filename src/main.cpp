@@ -27,7 +27,7 @@ int main()
 #endif
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    GLFWwindow *window = glfwCreateWindow(WindowWidth, WindowHeight, "Double Grit",  glfwGetPrimaryMonitor(), nullptr);
+    GLFWwindow *window = glfwCreateWindow(WindowWidth, WindowHeight, "Double Grit",  nullptr, nullptr);
     if (window == nullptr)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -96,7 +96,7 @@ void key_callback(GLFWwindow* /* window */, int key, int /* scancode */, int act
     }
 }
 
-void mouse_callback(GLFWwindow  * /* window */, double xpos, double ypos)
+void mouse_callback(GLFWwindow* /* window */, double xpos, double ypos)
 {
     DoubleGrit->ProcessMouse(xpos, ypos);
 }
