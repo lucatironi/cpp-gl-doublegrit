@@ -4,10 +4,11 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
+#include "texture.hpp"
+#include "shader.hpp"
+
 #include <vector>
 #include <iostream>
-
-#include "sprite_renderer.hpp"
 
 class Level
 {
@@ -15,21 +16,21 @@ class Level
     Level(const GLchar *file, Shader shader);
     ~Level();
 
-    Shader LevelShader;
     glm::vec3 PlayerStartPosition;
     void Draw(Texture2D texture);
 
   private:
     const GLuint levelWidth = 64;
     const GLuint levelHeight = 64;
-    const GLuint dataSize = 4096;
+    const GLuint levelDataSize = levelWidth * levelHeight;
 
     const GLfloat tileFraction = 16.0f / 1024.0f;
-    const GLfloat QUAD_SIZE = 1.0f;
+    const GLfloat quadSize = 1.0f;
 
+    Shader shader;
     GLuint VAO;
     std::vector<GLfloat> vertices;
-    std::vector<uint> levelData(uint);
+    GLuint levelData[];
 
     void load(const GLchar *file);
     void initRenderData();

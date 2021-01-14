@@ -8,9 +8,8 @@
 #include <irrKlang.h>
 using namespace irrklang;
 
-#include "game_object.hpp"
+#include "player_entity.hpp"
 #include "resource_manager.hpp"
-#include "gritty_renderer.hpp"
 #include "text_renderer.hpp"
 #include "pixelator.hpp"
 #include "level.hpp"
@@ -44,24 +43,19 @@ class Game
         void Update(GLfloat deltaTime);
         void Render(GLfloat deltaTime);
 
-        void SetWindowSize(GLuint width, GLuint height);
-        void SetFramebufferSize(GLuint width, GLuint height);
-
     private:
         GLFWwindow *Window;
         GLuint WindowWidth, WindowHeight, FramebufferWidth, FramebufferHeight;
         GLfloat lastMouseX, lastMouseY;
         bool firstMouse;
 
-        GrittyRenderer *Renderer;
-        SpriteRenderer *Sprite;
         Pixelator      *Pixel;
         TextRenderer   *Text;
         ISoundEngine   *SoundEngine;
 
         Camera         *FreeCam;
         glm::vec3      CamPosition;
-        GameObject     *Player;
+        PlayerEntity   *Player;
         Level          *CurrentLevel;
 
         void InitPlayer();

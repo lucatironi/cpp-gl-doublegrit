@@ -61,7 +61,7 @@ void Pixelator::EndRender()
     // copy:
     glBlitFramebuffer(
         0, 0, this->FramebufferWidth, this->FramebufferHeight, // source area: we rendered into framebufferwidth X framebufferheight
-        0, 0, this->WindowWidth, this->WindowHeight,                       // destination area: copy only the area in which we rendered
+        0, 0, this->WindowWidth,      this->WindowHeight,      // destination area: copy only the area in which we rendered
         GL_COLOR_BUFFER_BIT,                                   // buffer bitfield: copy the color only (from location "GL_COLOR_ATTACHMENT0")
         GL_NEAREST);                                           // filtering parameter
 

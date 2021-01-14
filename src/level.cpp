@@ -4,7 +4,7 @@
 
 Level::Level(const GLchar *file, Shader shader)
 {
-    this->LevelShader = shader;
+    this->shader = shader;
     this->load(file);
     this->initRenderData();
 }
@@ -16,7 +16,7 @@ Level::~Level()
 
 void Level::Draw(Texture2D texture)
 {
-    this->LevelShader.Use();
+    this->shader.Use();
 
     glActiveTexture(GL_TEXTURE0);
     texture.Bind();
@@ -48,83 +48,86 @@ void Level::pushQuad(GLfloat x1, GLfloat y1, GLfloat z1,
 void Level::pushFloor(GLfloat x, GLfloat z)
 {
     this->pushQuad(x, 0.0f, z,
-                   x + QUAD_SIZE, 0.0f, z,
-                   x, 0.0f, z + QUAD_SIZE,
-                   x + QUAD_SIZE, 0.0f, z + QUAD_SIZE,
+                   x + quadSize, 0.0f, z,
+                   x, 0.0f, z + quadSize,
+                   x + quadSize, 0.0f, z + quadSize,
                    0.0f, 1.0f, 0.0f,
                    randomFloorTile());
 }
 
 void Level::pushBlock(GLfloat x, GLfloat z)
 {
-    GLfloat y = QUAD_SIZE;
+    GLfloat y = quadSize;
 
     // top
     this->pushQuad(x, y, z,
-                   x + QUAD_SIZE, y, z,
-                   x, y, z + QUAD_SIZE,
-                   x + QUAD_SIZE, y, z + QUAD_SIZE,
+                   x + quadSize, y, z,
+                   x, y, z + quadSize,
+                   x + quadSize, y, z + quadSize,
                    0.0f, 1.0f, 0.0f,
                    0);
     // right
-    this->pushQuad(x + QUAD_SIZE, y, z,
-                   x + QUAD_SIZE, y, z + QUAD_SIZE,
-                   x + QUAD_SIZE, 0.0f, z,
-                   x + QUAD_SIZE, 0.0f, z + QUAD_SIZE,
+    this->pushQuad(x + quadSize, y, z,
+                   x + quadSize, y, z + quadSize,
+                   x + quadSize, 0.0f, z,
+                   x + quadSize, 0.0f, z + quadSize,
                    1.0f, 0.0f, 0.0f,
                    randomWallTile());
     // front
-    this->pushQuad(x, y, z + QUAD_SIZE,
-                   x + QUAD_SIZE, y, z + QUAD_SIZE,
-                   x, 0.0f, z + QUAD_SIZE,
-                   x + QUAD_SIZE, 0.0f, z + QUAD_SIZE,
+    this->pushQuad(x, y, z + quadSize,
+                   x + quadSize, y, z + quadSize,
+                   x, 0.0f, z + quadSize,
+                   x + quadSize, 0.0f, z + quadSize,
                    0.0f, 0.0f, 1.0f,
                    randomWallTile());
     // left
     this->pushQuad(x, y, z,
-                   x, y, z + QUAD_SIZE,
+                   x, y, z + quadSize,
                    x, 0.0f, z,
-                   x, 0.0f, z + QUAD_SIZE,
+                   x, 0.0f, z + quadSize,
                    -1.0f, 0.0f, 0.0f,
                    randomWallTile());
     // back
     this->pushQuad(x, y, z,
-                   x + QUAD_SIZE, y, z,
+                   x + quadSize, y, z,
                    x, 0.0f, z,
-                   x + QUAD_SIZE, 0.0f, z,
+                   x + quadSize, 0.0f, z,
                    0.0f, 0.0f, -1.0f,
                    randomWallTile());
 }
 
 void Level::load(const GLchar *file)
 {
+    this->levelData[levelDataSize];
+
     // Load image
-    int width, height, channels;
+    int width, height, channels, index;
     unsigned char *image = stbi_load(file, &width, &height, &channels, 1);
 
-    for (int y = 0; y < height; y++)
+    for (int y = 0, index = 0; y < height; y++)
     {
-        for (int x = 0; x < width; x++)
+        for (int x = 0; x < width; x++, index++)
         {
             int colorKey = image[width * y + x];
 
             switch (colorKey)
             {
             case 255: // white, floor
-                pushFloor(x * QUAD_SIZE, y * QUAD_SIZE);
+                pushFloor(x * quadSize, y * quadSize);
                 break;
             case 128: // grey, wall
-                pushBlock(x * QUAD_SIZE, y * QUAD_SIZE);
+                this->levelData[index] = 1;
+                pushBlock(x * quadSize, y * quadSize);
                 break;
             case 76: // red
-                pushFloor(x * QUAD_SIZE, y * QUAD_SIZE);
+                pushFloor(x * quadSize, y * quadSize);
                 break;
             case 149: // green, player
-                this->PlayerStartPosition = glm::vec3(x + QUAD_SIZE / 2.0f, 0.8f, y + QUAD_SIZE / 2.0f);
-                pushFloor(x * QUAD_SIZE, y * QUAD_SIZE);
+                this->PlayerStartPosition = glm::vec3(x + quadSize / 2.0f, 0.2f, y + quadSize / 2.0f);
+                pushFloor(x * quadSize, y * quadSize);
                 break;
             case 28: // blue
-                pushFloor(x * QUAD_SIZE, y * QUAD_SIZE);
+                pushFloor(x * quadSize, y * quadSize);
                 break;
             }
         }
@@ -151,10 +154,10 @@ void Level::initRenderData()
     glEnableVertexAttribArray(0);
     // normal attribute
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
-    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(1);
     // texture coord attribute
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
