@@ -47,11 +47,11 @@ void Level::pushQuad(GLfloat x1, GLfloat y1, GLfloat z1,
 void Level::pushFloor(GLfloat x, GLfloat z)
 {
     pushQuad(x, 0.0f, z,
-                   x + quadSize, 0.0f, z,
-                   x, 0.0f, z + quadSize,
-                   x + quadSize, 0.0f, z + quadSize,
-                   0.0f, 1.0f, 0.0f,
-                   randomFloorTile());
+            x + quadSize, 0.0f, z,
+            x, 0.0f, z + quadSize,
+            x + quadSize, 0.0f, z + quadSize,
+            0.0f, 1.0f, 0.0f,
+            randomFloorTile());
 }
 
 void Level::pushBlock(GLfloat x, GLfloat z)
@@ -60,39 +60,39 @@ void Level::pushBlock(GLfloat x, GLfloat z)
 
     // top
     pushQuad(x, y, z,
-                   x + quadSize, y, z,
-                   x, y, z + quadSize,
-                   x + quadSize, y, z + quadSize,
-                   0.0f, 1.0f, 0.0f,
-                   0);
+            x + quadSize, y, z,
+            x, y, z + quadSize,
+            x + quadSize, y, z + quadSize,
+            0.0f, 1.0f, 0.0f,
+            0);
     // right
     pushQuad(x + quadSize, y, z,
-                   x + quadSize, y, z + quadSize,
-                   x + quadSize, 0.0f, z,
-                   x + quadSize, 0.0f, z + quadSize,
-                   1.0f, 0.0f, 0.0f,
-                   randomWallTile());
+            x + quadSize, y, z + quadSize,
+            x + quadSize, 0.0f, z,
+            x + quadSize, 0.0f, z + quadSize,
+            1.0f, 0.0f, 0.0f,
+            randomWallTile());
     // front
     pushQuad(x, y, z + quadSize,
-                   x + quadSize, y, z + quadSize,
-                   x, 0.0f, z + quadSize,
-                   x + quadSize, 0.0f, z + quadSize,
-                   0.0f, 0.0f, 1.0f,
-                   randomWallTile());
+            x + quadSize, y, z + quadSize,
+            x, 0.0f, z + quadSize,
+            x + quadSize, 0.0f, z + quadSize,
+            0.0f, 0.0f, 1.0f,
+            randomWallTile());
     // left
     pushQuad(x, y, z,
-                   x, y, z + quadSize,
-                   x, 0.0f, z,
-                   x, 0.0f, z + quadSize,
-                   -1.0f, 0.0f, 0.0f,
-                   randomWallTile());
+            x, y, z + quadSize,
+            x, 0.0f, z,
+            x, 0.0f, z + quadSize,
+            -1.0f, 0.0f, 0.0f,
+            randomWallTile());
     // back
     pushQuad(x, y, z,
-                   x + quadSize, y, z,
-                   x, 0.0f, z,
-                   x + quadSize, 0.0f, z,
-                   0.0f, 0.0f, -1.0f,
-                   randomWallTile());
+            x + quadSize, y, z,
+            x, 0.0f, z,
+            x + quadSize, 0.0f, z,
+            0.0f, 0.0f, -1.0f,
+            randomWallTile());
 }
 
 void Level::load(const GLchar *file)
