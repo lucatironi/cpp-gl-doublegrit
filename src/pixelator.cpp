@@ -7,26 +7,26 @@ Pixelator::Pixelator(GLuint windowWidth, GLuint windowHeight, GLuint framebuffer
     : WindowWidth(windowWidth), WindowHeight(windowHeight), FramebufferWidth(framebufferWidth), FramebufferHeight(framebufferHeight)
 {
     // Initialize framebuffer/renderbuffers objects
-    glGenFramebuffers(1, &this->FBO);
-    glGenRenderbuffers(1, &this->colorRBO);
-    glGenRenderbuffers(1, &this->depthRBO);
+    glGenFramebuffers(1, &FBO);
+    glGenRenderbuffers(1, &colorRBO);
+    glGenRenderbuffers(1, &depthRBO);
 
-    glBindRenderbuffer(GL_RENDERBUFFER, this->colorRBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, colorRBO);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, framebufferWidth, framebufferHeight);
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "ERROR::PIXELATOR: Failed to initialize color RBO" << std::endl;
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-    glBindRenderbuffer(GL_RENDERBUFFER, this->depthRBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, depthRBO);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, framebufferWidth, framebufferHeight);
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "ERROR::PIXELATOR: Failed to initialize depth RBO" << std::endl;
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
     // attach renderbuffer to framebuffer (at location = GL_COLOR_ATTACHMENT0)
-    glBindFramebuffer(GL_FRAMEBUFFER, this->FBO);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, this->colorRBO);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, this->depthRBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorRBO);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRBO);
     // specify the attachments in which to draw:
     std::vector<GLenum> drawbuffers = {
         GL_COLOR_ATTACHMENT0,
@@ -44,28 +44,28 @@ Pixelator::~Pixelator()
 
 void Pixelator::BeginRender()
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, this->FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glViewport(0, 0, this->FramebufferWidth, this->FramebufferHeight);
+    glViewport(0, 0, FramebufferWidth, FramebufferHeight);
 }
 
 void Pixelator::EndRender()
 {
     // copy off-screen framebuffer content into the screen framebuffer (also called "default framebuffer")
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);           // write into default framebuffer
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, this->FBO);   // read from off-screen framebuffer
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, FBO);   // read from off-screen framebuffer
 
     // read from location "GL_COLOR_ATTACHMENT0" from the currently bound GL_READ_FRAMEBUFFER
     glReadBuffer(GL_COLOR_ATTACHMENT0);
 
     // copy:
     glBlitFramebuffer(
-        0, 0, this->FramebufferWidth, this->FramebufferHeight, // source area: we rendered into framebufferwidth X framebufferheight
-        0, 0, this->WindowWidth,      this->WindowHeight,      // destination area: copy only the area in which we rendered
+        0, 0, FramebufferWidth, FramebufferHeight, // source area: we rendered into framebufferwidth X framebufferheight
+        0, 0, WindowWidth,      WindowHeight,      // destination area: copy only the area in which we rendered
         GL_COLOR_BUFFER_BIT,                                   // buffer bitfield: copy the color only (from location "GL_COLOR_ATTACHMENT0")
         GL_NEAREST);                                           // filtering parameter
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // Binds both READ and WRITE framebuffer to default framebuffer
 
-    glViewport(0, 0, this->WindowWidth, this->WindowHeight);
+    glViewport(0, 0, WindowWidth, WindowHeight);
 }

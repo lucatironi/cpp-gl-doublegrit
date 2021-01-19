@@ -5,22 +5,21 @@
 
 #include "text_renderer.hpp"
 
-TextRenderer::TextRenderer(Shader shader)
+TextRenderer::TextRenderer(Shader shader) : shader(shader)
 {
-    this->shader = shader;
-    this->initRenderData();
+    initRenderData();
 }
 
 TextRenderer::~TextRenderer()
 {
-    glDeleteVertexArrays(1, &this->quadVAO);
-    glDeleteBuffers(1, &this->VBO);
+    glDeleteVertexArrays(1, &quadVAO);
+    glDeleteBuffers(1, &VBO);
 }
 
 void TextRenderer::LoadFont(std::string font, GLuint fontSize)
 {
     // First clear the previously loaded Characters
-    this->Characters.clear();
+    Characters.clear();
     // Then initialize and load the FreeType library
     FT_Library ft;
     if (FT_Init_FreeType(&ft)) // All functions return a value different than 0 whenever an error occurred
@@ -68,7 +67,7 @@ void TextRenderer::LoadFont(std::string font, GLuint fontSize)
             glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
             glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
             GLuint(face->glyph->advance.x)};
-        this->Characters.insert(std::pair<GLchar, Character>(c, character));
+        Characters.insert(std::pair<GLchar, Character>(c, character));
     }
     glBindTexture(GL_TEXTURE_2D, 0);
     // Destroy FreeType once we're finished
@@ -79,10 +78,10 @@ void TextRenderer::LoadFont(std::string font, GLuint fontSize)
 void TextRenderer::RenderText(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color)
 {
     // Activate corresponding render state
-    this->shader.Use();
-    this->shader.SetVector3f("textColor", color);
+    shader.Use();
+    shader.SetVector3f("textColor", color);
     glActiveTexture(GL_TEXTURE0);
-    glBindVertexArray(this->quadVAO);
+    glBindVertexArray(quadVAO);
 
     // Iterate through all characters
     std::string::const_iterator c;
@@ -91,7 +90,7 @@ void TextRenderer::RenderText(std::string text, GLfloat x, GLfloat y, GLfloat sc
         Character ch = Characters[*c];
 
         GLfloat xpos = x + ch.Bearing.x * scale;
-        GLfloat ypos = y + (this->Characters['H'].Bearing.y - ch.Bearing.y) * scale;
+        GLfloat ypos = y + (Characters['H'].Bearing.y - ch.Bearing.y) * scale;
 
         GLfloat w = ch.Size.x * scale;
         GLfloat h = ch.Size.y * scale;
@@ -107,7 +106,7 @@ void TextRenderer::RenderText(std::string text, GLfloat x, GLfloat y, GLfloat sc
         // Render glyph texture over quad
         glBindTexture(GL_TEXTURE_2D, ch.TextureID);
         // Update content of VBO memory
-        glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); // Be sure to use glBufferSubData and not glBufferData
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -123,13 +122,13 @@ void TextRenderer::RenderText(std::string text, GLfloat x, GLfloat y, GLfloat sc
 void TextRenderer::initRenderData()
 {
     // Configure VAO/VBO for texture quads
-    glGenVertexArrays(1, &this->quadVAO);
-    glGenBuffers(1, &this->VBO);
+    glGenVertexArrays(1, &quadVAO);
+    glGenBuffers(1, &VBO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
 
-    glBindVertexArray(this->quadVAO);
+    glBindVertexArray(quadVAO);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);

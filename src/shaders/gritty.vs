@@ -23,7 +23,7 @@ void main()
     // diffuse
     vec3 norm = normalize(aNormal);
     vec3 lightDir = normalize(lightPos - aPos);
-    float diffuse = max(dot(norm, lightDir), 0.0);
+    float diffuse = max(dot(aNormal, lightDir), 0.0);
 
     // attenuation
     float distance = length(lightPos - aPos);

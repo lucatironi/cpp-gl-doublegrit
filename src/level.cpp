@@ -2,27 +2,26 @@
 
 #include <stb_image.h>
 
-Level::Level(const GLchar *file, Shader shader)
+Level::Level(const GLchar *file, Shader shader) : shader(shader)
 {
-    this->shader = shader;
-    this->load(file);
-    this->initRenderData();
+    load(file);
+    initRenderData();
 }
 
 Level::~Level()
 {
-    glDeleteVertexArrays(1, &this->VAO);
+    glDeleteVertexArrays(1, &VAO);
 }
 
 void Level::Draw(Texture2D texture)
 {
-    this->shader.Use();
+    shader.Use();
 
     glActiveTexture(GL_TEXTURE0);
     texture.Bind();
 
-    glBindVertexArray(this->VAO);
-    glDrawArrays(GL_TRIANGLES, 0, this->vertices.size());
+    glBindVertexArray(VAO);
+    glDrawArrays(GL_TRIANGLES, 0, vertices.size());
     glBindVertexArray(0);
 }
 
@@ -42,12 +41,12 @@ void Level::pushQuad(GLfloat x1, GLfloat y1, GLfloat z1,
         x2, y2, z2, nx, ny, nz, u + tileFraction, 0.0f,
         x3, y3, z3, nx, ny, nz, u, 1.0f,
         x4, y4, z4, nx, ny, nz, u + tileFraction, 1.0f};
-    this->vertices.insert(end(this->vertices), begin(newVertices), end(newVertices));
+    vertices.insert(end(vertices), begin(newVertices), end(newVertices));
 }
 
 void Level::pushFloor(GLfloat x, GLfloat z)
 {
-    this->pushQuad(x, 0.0f, z,
+    pushQuad(x, 0.0f, z,
                    x + quadSize, 0.0f, z,
                    x, 0.0f, z + quadSize,
                    x + quadSize, 0.0f, z + quadSize,
@@ -60,35 +59,35 @@ void Level::pushBlock(GLfloat x, GLfloat z)
     GLfloat y = quadSize;
 
     // top
-    this->pushQuad(x, y, z,
+    pushQuad(x, y, z,
                    x + quadSize, y, z,
                    x, y, z + quadSize,
                    x + quadSize, y, z + quadSize,
                    0.0f, 1.0f, 0.0f,
                    0);
     // right
-    this->pushQuad(x + quadSize, y, z,
+    pushQuad(x + quadSize, y, z,
                    x + quadSize, y, z + quadSize,
                    x + quadSize, 0.0f, z,
                    x + quadSize, 0.0f, z + quadSize,
                    1.0f, 0.0f, 0.0f,
                    randomWallTile());
     // front
-    this->pushQuad(x, y, z + quadSize,
+    pushQuad(x, y, z + quadSize,
                    x + quadSize, y, z + quadSize,
                    x, 0.0f, z + quadSize,
                    x + quadSize, 0.0f, z + quadSize,
                    0.0f, 0.0f, 1.0f,
                    randomWallTile());
     // left
-    this->pushQuad(x, y, z,
+    pushQuad(x, y, z,
                    x, y, z + quadSize,
                    x, 0.0f, z,
                    x, 0.0f, z + quadSize,
                    -1.0f, 0.0f, 0.0f,
                    randomWallTile());
     // back
-    this->pushQuad(x, y, z,
+    pushQuad(x, y, z,
                    x + quadSize, y, z,
                    x, 0.0f, z,
                    x + quadSize, 0.0f, z,
@@ -98,15 +97,13 @@ void Level::pushBlock(GLfloat x, GLfloat z)
 
 void Level::load(const GLchar *file)
 {
-    this->levelData[levelDataSize];
-
     // Load image
-    int width, height, channels, index;
+    int width, height, channels;
     unsigned char *image = stbi_load(file, &width, &height, &channels, 1);
 
-    for (int y = 0, index = 0; y < height; y++)
+    for (int y = 0; y < height; y++)
     {
-        for (int x = 0; x < width; x++, index++)
+        for (int x = 0; x < width; x++)
         {
             int colorKey = image[width * y + x];
 
@@ -116,18 +113,19 @@ void Level::load(const GLchar *file)
                 pushFloor(x * quadSize, y * quadSize);
                 break;
             case 128: // grey, wall
-                this->levelData[index] = 1;
                 pushBlock(x * quadSize, y * quadSize);
                 break;
             case 76: // red
                 pushFloor(x * quadSize, y * quadSize);
                 break;
             case 149: // green, player
-                this->PlayerStartPosition = glm::vec3(x + quadSize / 2.0f, 0.2f, y + quadSize / 2.0f);
+                PlayerStartPosition = glm::vec3(x + quadSize / 2.0f, 0.2f, y + quadSize / 2.0f);
                 pushFloor(x * quadSize, y * quadSize);
                 break;
             case 28: // blue
                 pushFloor(x * quadSize, y * quadSize);
+                break;
+            default:
                 break;
             }
         }
@@ -141,13 +139,13 @@ void Level::initRenderData()
     // Configure VAO/VBO
     GLuint VBO;
 
-    glGenVertexArrays(1, &this->VAO);
+    glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
 
-    glBindVertexArray(this->VAO);
+    glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(float), this->vertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
 
     // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);

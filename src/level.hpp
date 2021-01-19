@@ -20,17 +20,12 @@ class Level
     void Draw(Texture2D texture);
 
   private:
-    const GLuint levelWidth = 64;
-    const GLuint levelHeight = 64;
-    const GLuint levelDataSize = levelWidth * levelHeight;
-
     const GLfloat tileFraction = 16.0f / 1024.0f;
     const GLfloat quadSize = 1.0f;
 
     Shader shader;
     GLuint VAO;
     std::vector<GLfloat> vertices;
-    GLuint levelData[];
 
     void load(const GLchar *file);
     void initRenderData();

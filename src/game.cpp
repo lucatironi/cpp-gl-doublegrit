@@ -276,7 +276,7 @@ void Game::UpdateCamera()
         view = glm::lookAt(CamPosition, Player->Position, glm::vec3(0.0f, 1.0f, 0.0f));
         lightPos = Player->Position;
         lightPos.y = 0.5f;
-        lightPos.x += 0.5f;
+        lightPos.x += 0.1f;
     }
 
     ResourceManager::GetShader("gritty").Use().SetInteger("freeCam", freeCam);
