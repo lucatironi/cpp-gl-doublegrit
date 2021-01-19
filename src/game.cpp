@@ -56,7 +56,7 @@ void Game::Init()
     this->CurrentLevel = new Level("../assets/level1.png", ResourceManager::GetShader("gritty"));
 
     // Configure Player
-    this->Player = new PlayerEntity(this->CurrentLevel->PlayerStartPosition, glm::vec3(0.4f), ResourceManager::GetTexture("player"), ResourceManager::GetShader("gritty"));
+    this->Player = new PlayerEntity(this->CurrentLevel->PlayerStartPosition, glm::vec3(0.25f), ResourceManager::GetTexture("player"), ResourceManager::GetShader("gritty"));
 
     // Configure Camera
     this->FreeCam = new Camera(this->Player->Position, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -128,16 +128,19 @@ void Game::ProcessInput(GLfloat deltaTime)
         }
         else
         {
-            GLfloat deltaSpace = 4.0f * deltaTime;
-            if (this->Keys[GLFW_KEY_W]) // Forward
+            if (this->Keys[GLFW_KEY_W] && !this->Keys[GLFW_KEY_S]) // Forward
+                this->Player->ProcessKeyboard(PLAYER_FORWARD);
+            else if (this->Keys[GLFW_KEY_S] && !this->Keys[GLFW_KEY_W]) // Backward
+                this->Player->ProcessKeyboard(PLAYER_BACKWARD);
+            else
+                this->Player->ProcessKeyboard(PLAYER_STOPZ);
 
-                this->Player->Position.z -= deltaSpace;
-            if (this->Keys[GLFW_KEY_S]) // Backward
-                this->Player->Position.z += deltaSpace;
-            if (this->Keys[GLFW_KEY_A]) // Left
-                this->Player->Position.x -= deltaSpace;
-            if (this->Keys[GLFW_KEY_D]) // Right
-                this->Player->Position.x += deltaSpace;
+            if (this->Keys[GLFW_KEY_A] && !this->Keys[GLFW_KEY_D]) // Left
+                this->Player->ProcessKeyboard(PLAYER_LEFT);
+            else if (this->Keys[GLFW_KEY_D] && !this->Keys[GLFW_KEY_A]) // Right
+                this->Player->ProcessKeyboard(PLAYER_RIGHT);
+            else
+                this->Player->ProcessKeyboard(PLAYER_STOPX);
         }
 
         if (this->Keys[GLFW_KEY_SPACE] && !this->KeysProcessed[GLFW_KEY_SPACE])
@@ -198,11 +201,12 @@ void Game::ProcessMouse(GLfloat xpos, GLfloat ypos)
     }
 }
 
-void Game::Update(GLfloat /* deltaTime */)
+void Game::Update(GLfloat deltaTime)
 {
     if (this->State == GAME_ACTIVE)
     {
         UpdateCamera();
+        Player->Update(deltaTime);
     }
 }
 
@@ -251,7 +255,7 @@ void Game::Reset()
 
 void Game::InitPlayer()
 {
-
+    this->Player->Position = this->CurrentLevel->PlayerStartPosition;
 }
 
 void Game::UpdateCamera()
