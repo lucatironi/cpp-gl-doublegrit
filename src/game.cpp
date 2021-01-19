@@ -256,23 +256,23 @@ void Game::InitPlayer()
 
 void Game::UpdateCamera()
 {
-    this->CamPosition = this->Player->Position + glm::vec3(0.0f, 3.0f, 2.0f);
-
+    this->CamPosition = this->Player->Position + glm::vec3(0.0f, 2.5f, 2.0f);
     glm::mat4 perspective = glm::perspective(glm::radians(90.0f), static_cast<GLfloat>(this->WindowWidth) / static_cast<GLfloat>(this->WindowHeight), 0.1f, 100.0f);
     glm::mat4 view;
-    glm::vec3 lightPos, lightColor;
+    glm::vec3 lightPos;
+    glm::vec3 lightColor = glm::vec3(0.5f, 0.25f, 0.0f);
 
     if(freeCam)
     {
         view = this->FreeCam->GetViewMatrix();
         lightPos = this->FreeCam->Position;
-        lightColor = glm::vec3(0.5f, 0.5f, 0.5f);
     }
     else
     {
         view = glm::lookAt(this->CamPosition, this->Player->Position, glm::vec3(0.0f, 1.0f, 0.0f));
         lightPos = this->Player->Position;
-        lightColor = glm::vec3(1.0f, 0.5f, 0.0f);
+        lightPos.y = 0.5f;
+        lightPos.x += 0.5f;
     }
 
     ResourceManager::GetShader("gritty").Use().SetInteger("freeCam", freeCam);
