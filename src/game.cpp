@@ -1,11 +1,13 @@
 #include <sstream>
 #include <iostream>
+#include <iomanip>
 
 #include "game.hpp"
 
 bool pixelate = true;
 bool retro = true;
 bool freeCam = false;
+bool showStats = true;
 
 Game::Game(GLFWwindow *window, GLuint windowWidth, GLuint windowHeight, GLuint framebufferWidth, GLuint framebufferHeight)
     : State(GAME_MENU),
@@ -160,6 +162,12 @@ void Game::ProcessInput(GLfloat deltaTime)
             freeCam = !freeCam;
             this->KeysProcessed[GLFW_KEY_3] = GL_TRUE;
         }
+        // 4 Toggle stats
+        if (this->Keys[GLFW_KEY_4] && !this->KeysProcessed[GLFW_KEY_4])
+        {
+            showStats = !showStats;
+            this->KeysProcessed[GLFW_KEY_4] = GL_TRUE;
+        }
         // ESC pauses game
         if (this->Keys[GLFW_KEY_ESCAPE] && !this->KeysProcessed[GLFW_KEY_ESCAPE])
         {
@@ -203,8 +211,10 @@ void Game::Render(GLfloat deltaTime)
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (this->State == GAME_ACTIVE || this->State == GAME_PAUSED ||
-        this->State == GAME_MENU || this->State == GAME_WIN)
+    if (this->State == GAME_ACTIVE ||
+        this->State == GAME_PAUSED ||
+        this->State == GAME_MENU ||
+        this->State == GAME_WIN)
     {
         if (pixelate)
             Pixel->BeginRender();
@@ -217,12 +227,21 @@ void Game::Render(GLfloat deltaTime)
     }
 
     if (this->State != GAME_ACTIVE)
-        Text->RenderText("PAUSED", this->WindowWidth / 2.0f - 50.0f, this->WindowHeight / 2.0f - 20.0f, 1.0f);
-
-    // Render FPS Counter
-    std::stringstream fps;
-    fps << (int)(1 / deltaTime);
-    Text->RenderText(fps.str(), this->WindowWidth - 30.0f, 4.0f, 0.5f);
+    {
+        Text->RenderText("PAUSED", this->WindowWidth / 2.0f - 50.0f, this->WindowHeight / 2.0f - 50.0f, 1.0f);
+        Text->RenderText("PRESS ENTER TO START ", this->WindowWidth / 2.0f - 150.0f, this->WindowHeight / 2.0f - 20.0f, 1.0f);
+        Text->RenderText("PRESS ESC TO QUIT ", this->WindowWidth / 2.0f - 120.0f, this->WindowHeight / 2.0f + 10.0f, 1.0f);
+    }
+    if (showStats)
+    {
+        // Render FPS counter and player position
+        std::stringstream stats;
+        stats << std::fixed << std::setprecision(1)
+                    << "x:" << this->Player->Position.x
+                    << " z:" << this->Player->Position.z
+                    << " fps:" << (int)(1 / deltaTime);
+        Text->RenderText(stats.str(), this->WindowWidth - 180.0f, 5.0f, 0.5f);
+    }
 }
 
 void Game::Reset()
