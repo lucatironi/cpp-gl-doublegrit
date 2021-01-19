@@ -230,11 +230,16 @@ void Game::Render(GLfloat deltaTime)
             Pixel->EndRender();
     }
 
-    if (State != GAME_ACTIVE)
+    if (State == GAME_PAUSED)
     {
         Text->RenderText("PAUSED", WindowWidth / 2.0f - 50.0f, WindowHeight / 2.0f - 50.0f, 1.0f);
-        Text->RenderText("PRESS ENTER TO START ", WindowWidth / 2.0f - 150.0f, WindowHeight / 2.0f - 20.0f, 1.0f);
-        Text->RenderText("PRESS ESC TO QUIT ", WindowWidth / 2.0f - 120.0f, WindowHeight / 2.0f + 10.0f, 1.0f);
+        Text->RenderText("PRESS ENTER TO CONTINUE", WindowWidth / 2.0f - 190.0f, WindowHeight / 2.0f - 20.0f, 1.0f);
+        Text->RenderText("PRESS ESC TO EXIT TO MENU", WindowWidth / 2.0f - 210.0f, WindowHeight / 2.0f + 10.0f, 1.0f);
+    }
+    if (State == GAME_MENU)
+    {
+        Text->RenderText("PRESS ENTER TO START", WindowWidth / 2.0f - 150.0f, WindowHeight / 2.0f - 20.0f, 1.0f);
+        Text->RenderText("PRESS ESC TO QUIT", WindowWidth / 2.0f - 120.0f, WindowHeight / 2.0f + 10.0f, 1.0f);
     }
     if (showStats)
     {
