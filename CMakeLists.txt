@@ -6,6 +6,11 @@ option(GLFW_BUILD_EXAMPLES OFF)
 option(GLFW_BUILD_TESTS OFF)
 add_subdirectory(vendor/glfw)
 
+option(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
+option(ASSIMP_BUILD_SAMPLES OFF)
+option(ASSIMP_BUILD_TESTS OFF)
+add_subdirectory(vendor/assimp)
+
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
 else()
@@ -16,6 +21,7 @@ else()
 endif()
 
 include_directories(src/
+                    vendor/assimp/include/
                     vendor/freetype/include/
                     vendor/glad/include/
                     vendor/glfw/include/
@@ -59,7 +65,7 @@ add_definitions(-DGLFW_INCLUDE_NONE
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${PROJECT_HEADERS}
                                ${PROJECT_SHADERS} ${PROJECT_CONFIGS}
                                ${VENDORS_SOURCES})
-target_link_libraries(${PROJECT_NAME} glfw irrKlang
+target_link_libraries(${PROJECT_NAME} assimp glfw irrKlang
                       ${GLFW_LIBRARIES} ${GLAD_LIBRARIES} ${FREETYPE_LIBRARIES})
 set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${PROJECT_NAME})

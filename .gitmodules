@@ -11,3 +11,6 @@
 [submodule "vendor/stb"]
 	path = vendor/stb
 	url = git@github.com:nothings/stb.git
+[submodule "vendor/assimp"]
+	path = vendor/assimp
+	url = git@github.com:assimp/assimp.git

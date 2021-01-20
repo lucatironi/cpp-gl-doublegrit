@@ -7,12 +7,14 @@
                 "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1",
                 "/usr/local/include",
                 "${workspaceRoot}",
+                "${workspaceRoot}/vendor/assimp/include",
                 "${workspaceRoot}/vendor/freetype/include",
                 "${workspaceRoot}/vendor/glad/include",
                 "${workspaceRoot}/vendor/glfw/include",
                 "${workspaceRoot}/vendor/glm",
                 "${workspaceRoot}/vendor/irrKlang/include",
-                "${workspaceRoot}/vendor/stb"
+                "${workspaceRoot}/vendor/stb",
+                "${workspaceFolder}/build/vendor/assimp/include"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",
@@ -27,7 +29,8 @@
             ],
             "compilerPath": "/usr/bin/clang",
             "cStandard": "c11",
-            "cppStandard": "c++17"
+            "cppStandard": "c++17",
+            "configurationProvider": "go2sh.cmake-integration"
         },
         {
             "name": "Linux",
