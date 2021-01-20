@@ -9,14 +9,18 @@
 #include "shader.hpp"
 
 // Defines several possible options for player movement. Used as abstraction to stay away from window-system specific input methods
-enum Player_Movement
+enum PlayerMovement
 {
-    PLAYER_FORWARD,
-    PLAYER_BACKWARD,
-    PLAYER_LEFT,
-    PLAYER_RIGHT,
-    PLAYER_STOPZ,
-    PLAYER_STOPX
+    FORWARD,
+    BACKWARD,
+    LEFT,
+    RIGHT
+};
+
+enum PlayerAxis
+{
+    LONGITUDINAL,
+    LATERAL
 };
 
 // Default camera values
@@ -31,7 +35,9 @@ class PlayerEntity
         PlayerEntity(glm::vec3 position, glm::vec3 size, Texture2D texture, Shader shader);
         ~PlayerEntity();
 
-        void ProcessKeyboard(Player_Movement direction);
+        void Move(PlayerMovement direction);
+        void Stop(PlayerAxis);
+
         void Update(GLfloat deltatime);
         void Draw();
 

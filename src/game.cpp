@@ -129,18 +129,18 @@ void Game::ProcessInput(GLfloat deltaTime)
         else
         {
             if (Keys[GLFW_KEY_W] && !Keys[GLFW_KEY_S]) // Forward
-                Player->ProcessKeyboard(PLAYER_FORWARD);
+                Player->Move(FORWARD);
             else if (Keys[GLFW_KEY_S] && !Keys[GLFW_KEY_W]) // Backward
-                Player->ProcessKeyboard(PLAYER_BACKWARD);
+                Player->Move(BACKWARD);
             else
-                Player->ProcessKeyboard(PLAYER_STOPZ);
+                Player->Stop(LONGITUDINAL);
 
             if (Keys[GLFW_KEY_A] && !Keys[GLFW_KEY_D]) // Left
-                Player->ProcessKeyboard(PLAYER_LEFT);
+                Player->Move(LEFT);
             else if (Keys[GLFW_KEY_D] && !Keys[GLFW_KEY_A]) // Right
-                Player->ProcessKeyboard(PLAYER_RIGHT);
+                Player->Move(RIGHT);
             else
-                Player->ProcessKeyboard(PLAYER_STOPX);
+                Player->Stop(LATERAL);
         }
 
         if (Keys[GLFW_KEY_SPACE] && !KeysProcessed[GLFW_KEY_SPACE])

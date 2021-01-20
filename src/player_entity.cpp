@@ -18,20 +18,24 @@ PlayerEntity::~PlayerEntity()
     glDeleteVertexArrays(1, &VAO);
 }
 
-// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
-void PlayerEntity::ProcessKeyboard(Player_Movement direction)
+void PlayerEntity::Move(PlayerMovement direction)
 {
-    if (direction == PLAYER_FORWARD)
+    if (direction == FORWARD)
        acceleration.z = -PLAYER_ACCELERATION;
-    if (direction == PLAYER_BACKWARD)
+    if (direction == BACKWARD)
        acceleration.z = PLAYER_ACCELERATION;
-    if (direction == PLAYER_LEFT)
+    if (direction == LEFT)
        acceleration.x = -PLAYER_ACCELERATION;
-    if (direction == PLAYER_RIGHT)
+    if (direction == RIGHT)
         acceleration.x = PLAYER_ACCELERATION;
-    if (direction == PLAYER_STOPZ)
+
+}
+
+void PlayerEntity::Stop(PlayerAxis axis)
+{
+    if (axis == LONGITUDINAL)
         acceleration.z = 0.0f;
-    if (direction == PLAYER_STOPX)
+    if (axis == LATERAL)
         acceleration.x = 0.0f;
 }
 
