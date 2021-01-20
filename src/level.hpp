@@ -4,11 +4,11 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
-#include "texture.hpp"
-#include "shader.hpp"
-
 #include <vector>
 #include <iostream>
+
+#include "texture.hpp"
+#include "shader.hpp"
 
 class Level
 {

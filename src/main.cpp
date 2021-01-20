@@ -27,7 +27,7 @@ int main()
 #endif
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    GLFWwindow *window = glfwCreateWindow(WindowWidth, WindowHeight, "Double Grit",  nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(WindowWidth, WindowHeight, "Double Grit", nullptr, nullptr);
     if (window == nullptr)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -37,7 +37,7 @@ int main()
     glfwMakeContextCurrent(window);
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSwapInterval(0); // Disable vsync
+    // glfwSwapInterval(0); // Disable vsync
 
     // tell GLFW to capture our mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
