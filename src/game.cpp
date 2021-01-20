@@ -56,7 +56,8 @@ void Game::Init()
     CurrentLevel = new Level("../assets/level1.png", ResourceManager::GetShader("gritty"));
 
     // Configure Player
-    Player = new PlayerEntity(CurrentLevel->PlayerStartPosition, glm::vec3(0.25f), ResourceManager::GetTexture("player"), ResourceManager::GetShader("gritty"));
+    ResourceManager::LoadModel("../assets/VikingHelmet.obj", "playerModel");
+    Player = new PlayerEntity(CurrentLevel->PlayerStartPosition, glm::vec3(0.25f), ResourceManager::GetShader("gritty"), ResourceManager::GetModel("playerModel"));
 
     // Configure Camera
     FreeCam = new Camera(Player->Position, glm::vec3(0.0f, 1.0f, 0.0f));

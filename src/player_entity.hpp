@@ -7,6 +7,9 @@
 
 #include "texture.hpp"
 #include "shader.hpp"
+#include "model.hpp"
+
+#include <string>
 
 // Defines several possible options for player movement. Used as abstraction to stay away from window-system specific input methods
 enum PlayerMovement
@@ -32,7 +35,7 @@ class PlayerEntity
     public:
         glm::vec3 Position;
 
-        PlayerEntity(glm::vec3 position, glm::vec3 size, Texture2D texture, Shader shader);
+        PlayerEntity(glm::vec3 position, glm::vec3 size, Shader shader, Model model);
         ~PlayerEntity();
 
         void Move(PlayerMovement direction);
@@ -45,11 +48,8 @@ class PlayerEntity
         glm::vec3 size;
         GLfloat rotation;
         glm::vec3 acceleration, velocity;
-        Texture2D texture;
         Shader shader;
-        GLuint VAO;
-
-        void initRenderData();
+        Model model;
 };
 
 #endif
