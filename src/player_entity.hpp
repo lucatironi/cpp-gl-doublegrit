@@ -12,7 +12,7 @@
 #include <string>
 
 // Defines several possible options for player movement. Used as abstraction to stay away from window-system specific input methods
-enum PlayerMovement
+enum PlayerDirection
 {
     FORWARD,
     BACKWARD,
@@ -26,9 +26,10 @@ enum PlayerAxis
     LATERAL
 };
 
-// Default camera values
+const GLfloat GRAVITY = 9.8f;
 const GLfloat PLAYER_ACCELERATION = 15.0f;
 const GLfloat PLAYER_FRICTION = 5.0f;
+const GLfloat PLAYER_JUMP_VELOCITY = 4.0f;
 
 class PlayerEntity
 {
@@ -38,7 +39,8 @@ class PlayerEntity
         PlayerEntity(glm::vec3 position, glm::vec3 size, Shader shader, Model model);
         ~PlayerEntity();
 
-        void Move(PlayerMovement direction);
+        void Move(PlayerDirection direction);
+        void Jump();
         void Stop(PlayerAxis);
 
         void Update(GLfloat deltatime);
@@ -46,6 +48,7 @@ class PlayerEntity
 
     private:
         glm::vec3 size;
+        PlayerDirection direction;
         GLfloat rotation;
         glm::vec3 acceleration, velocity;
         Shader shader;

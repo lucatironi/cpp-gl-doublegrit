@@ -3,7 +3,8 @@
 PlayerEntity::PlayerEntity(glm::vec3 position, glm::vec3 size, Shader shader, Model model) :
     Position(position),
     size(size),
-    rotation(0.0f),
+    direction(FORWARD),
+    rotation(180.0f),
     acceleration(glm::vec3(0.0f)),
     velocity(glm::vec3(0.0f)),
     shader(shader),
@@ -15,16 +16,23 @@ PlayerEntity::~PlayerEntity()
 {
 }
 
-void PlayerEntity::Move(PlayerMovement direction)
+void PlayerEntity::Move(PlayerDirection direction)
 {
+    this->direction = direction;
+
     if (direction == FORWARD)
-       acceleration.z = -PLAYER_ACCELERATION;
+        acceleration.z = -PLAYER_ACCELERATION;
     if (direction == BACKWARD)
-       acceleration.z = PLAYER_ACCELERATION;
+        acceleration.z = PLAYER_ACCELERATION;
     if (direction == LEFT)
-       acceleration.x = -PLAYER_ACCELERATION;
+        acceleration.x = -PLAYER_ACCELERATION;
     if (direction == RIGHT)
         acceleration.x = PLAYER_ACCELERATION;
+}
+
+void PlayerEntity::Jump()
+{
+    velocity.y = PLAYER_JUMP_VELOCITY;
 }
 
 void PlayerEntity::Stop(PlayerAxis axis)
@@ -37,12 +45,47 @@ void PlayerEntity::Stop(PlayerAxis axis)
 
 void PlayerEntity::Update(GLfloat deltaTime)
 {
-    velocity.x += acceleration.x * deltaTime - velocity.x * std::min(PLAYER_FRICTION * deltaTime, 1.0f);
-    velocity.z += acceleration.z * deltaTime - velocity.z * std::min(PLAYER_FRICTION * deltaTime, 1.0f);
+    GLfloat desiredRotation;
 
-    // position
-    Position.x += velocity.x * deltaTime;
-    Position.z += velocity.z * deltaTime;
+    if (direction == FORWARD)
+        desiredRotation = 180.0f;
+    if (direction == BACKWARD)
+        desiredRotation = 0.0f;
+    if (direction == LEFT)
+        desiredRotation = 270.0f;
+    if (direction == RIGHT)
+        desiredRotation = 90.0f;
+
+    GLfloat deltaRotation = desiredRotation - rotation;
+    if (rotation >= 360.0f)
+        rotation = 0.0f;
+
+    if (abs(deltaRotation) > 0.9f)
+    {
+        if (rotation < desiredRotation)
+        {
+            if (abs(rotation - desiredRotation) < 180.0f)
+                rotation += deltaRotation * 10.0f * deltaTime;
+            else
+                rotation -= deltaRotation * 10.0f * deltaTime;
+        }
+        else
+        {
+            if (abs(rotation - desiredRotation) < 180.0f)
+                rotation -= deltaRotation * 10.0f * deltaTime;
+            else
+                rotation += deltaRotation * 10.0f * deltaTime;
+        }
+        
+        std::cout << "desired: " << desiredRotation << " rotation: " << rotation << " delta: " << deltaRotation << std::endl;
+    }
+
+    velocity += acceleration * deltaTime - velocity * std::min(PLAYER_FRICTION * deltaTime, 1.0f);
+    velocity.y -= GRAVITY * deltaTime - velocity.y * std::min(PLAYER_FRICTION * deltaTime, 1.0f);
+    Position += velocity * deltaTime;
+
+    if (Position.y < 0.0f)
+        Position.y = 0.0f;
 }
 
 void PlayerEntity::Draw()
@@ -50,11 +93,7 @@ void PlayerEntity::Draw()
     // Prepare transformations
     glm::mat4 modelMat = glm::mat4(1.0f);
     modelMat = glm::translate(modelMat, Position);
-
-    modelMat = glm::translate(modelMat, glm::vec3(0.5f * size.x, 0.5f * size.y, 0.5f * size.z));
-    modelMat = glm::rotate(modelMat, rotation, glm::vec3(0.0f, 1.0f, 0.0f));
-    modelMat = glm::translate(modelMat, size * -0.5f);
-
+    modelMat = glm::rotate(modelMat, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
     modelMat = glm::scale(modelMat, size);
 
     shader.Use();
