@@ -16,6 +16,13 @@ Level::~Level()
 void Level::Draw(Texture2D texture)
 {
     shader.Use();
+    
+    for (unsigned int i = 0; i < lights.size(); i++)
+    {
+        shader.SetVector3f("lights[" + std::to_string(i) + "].position", lights[i].position);
+        shader.SetVector3f("lights[" + std::to_string(i) + "].color", lights[i].color);
+        shader.SetFloat("lights[" + std::to_string(i) + "].attenuation", lights[i].attenuation);
+    }
 
     glActiveTexture(GL_TEXTURE0);
     texture.Bind();
@@ -119,10 +126,15 @@ void Level::load(const GLchar *file)
                 pushFloor(x * quadSize, y * quadSize);
                 break;
             case 149: // green, player
-                PlayerStartPosition = glm::vec3(x + quadSize / 2.0f, 0.2f, y + quadSize / 2.0f);
+                PlayerStartPosition = glm::vec3(x + quadSize / 2.0f, 0.0f, y + quadSize / 2.0f);
                 pushFloor(x * quadSize, y * quadSize);
                 break;
-            case 28: // blue
+            case 28: // blue, light
+                Light light;
+                light.position = glm::vec3(x + quadSize / 2.0f, quadSize, y + quadSize / 2.0f);
+                light.color = glm::vec3(0.0f, 0.1f, 0.7f);
+                light.attenuation = 0.08f;
+                lights.push_back(light);
                 pushFloor(x * quadSize, y * quadSize);
                 break;
             default:

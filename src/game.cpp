@@ -146,6 +146,7 @@ void Game::ProcessInput(GLfloat deltaTime)
 
         if (Keys[GLFW_KEY_SPACE] && !KeysProcessed[GLFW_KEY_SPACE])
         {
+            Player->Jump();
             KeysProcessed[GLFW_KEY_SPACE] = GL_TRUE;
         }
         // 1 Toggle Pixelate
@@ -248,9 +249,10 @@ void Game::Render(GLfloat deltaTime)
         std::stringstream stats;
         stats << std::fixed << std::setprecision(1)
                     << "x:" << Player->Position.x
+                    << " y:" << Player->Position.y
                     << " z:" << Player->Position.z
                     << " fps:" << (int)(1 / deltaTime);
-        Text->RenderText(stats.str(), WindowWidth - 180.0f, 5.0f, 0.5f);
+        Text->RenderText(stats.str(), WindowWidth - 220.0f, 5.0f, 0.5f);
     }
 }
 
@@ -269,26 +271,26 @@ void Game::UpdateCamera()
     CamPosition = Player->Position + glm::vec3(0.0f, 2.5f, 2.0f);
     glm::mat4 perspective = glm::perspective(glm::radians(90.0f), static_cast<GLfloat>(WindowWidth) / static_cast<GLfloat>(WindowHeight), 0.1f, 100.0f);
     glm::mat4 view;
-    glm::vec3 lightPos;
+    glm::vec3 playerPos;
     glm::vec3 lightColor = glm::vec3(0.5f, 0.25f, 0.0f);
 
     if(freeCam)
     {
         view = FreeCam->GetViewMatrix();
-        lightPos = FreeCam->Position;
+        playerPos = FreeCam->Position;
     }
     else
     {
         view = glm::lookAt(CamPosition, Player->Position, glm::vec3(0.0f, 1.0f, 0.0f));
-        lightPos = Player->Position;
-        lightPos.y = 0.5f;
-        lightPos.x += 0.1f;
+        playerPos = Player->Position;
+        playerPos.y = 0.5f;
+        playerPos.x += 0.1f;
     }
 
     ResourceManager::GetShader("gritty").Use().SetInteger("freeCam", freeCam);
     ResourceManager::GetShader("gritty").Use().SetInteger("retro", retro);
     ResourceManager::GetShader("gritty").Use().SetMatrix4("view", view);
     ResourceManager::GetShader("gritty").Use().SetMatrix4("projection", perspective);
-    ResourceManager::GetShader("gritty").Use().SetVector3f("lightPos", lightPos);
+    ResourceManager::GetShader("gritty").Use().SetVector3f("playerPos", playerPos);
     ResourceManager::GetShader("gritty").Use().SetVector3f("lightColor", lightColor);
 }

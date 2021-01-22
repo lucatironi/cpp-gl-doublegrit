@@ -10,6 +10,12 @@
 #include "texture.hpp"
 #include "shader.hpp"
 
+struct Light {
+    glm::vec3 position;
+    glm::vec3 color;
+    float attenuation;
+};
+
 class Level
 {
     public:
@@ -26,6 +32,7 @@ class Level
         Shader shader;
         GLuint VAO;
         std::vector<GLfloat> vertices;
+        std::vector<Light> lights;
 
         void load(const GLchar *file);
         void initRenderData();

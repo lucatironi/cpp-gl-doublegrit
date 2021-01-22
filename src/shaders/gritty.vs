@@ -3,17 +3,24 @@ layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexCoords;
 
-out vec3 VertexLight;
-out vec2 TexCoords;
+struct Light {
+    vec3 position;
+    vec3 color;
+    float attenuation;
+};
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-uniform vec3 lightPos;
+uniform vec3 playerPos;
 uniform vec3 lightColor;
+uniform Light lights[32];
 
 uniform bool entity;
+
+out vec3 VertexLight;
+out vec2 TexCoords;
 
 void main()
 {
@@ -22,15 +29,23 @@ void main()
 
     // diffuse
     vec3 norm = normalize(aNormal);
-    vec3 lightDir = normalize(lightPos - aPos);
+    vec3 lightDir = normalize(playerPos - aPos);
     float diffuse = max(dot(aNormal, lightDir), 0.0);
 
     // attenuation
-    float distance = length(lightPos - aPos);
-    float attenuation = 1.0 / (0.04 * distance);
+    float distance = length(playerPos - aPos);
+    float attenuation = 1.0 / (0.05 * distance);
 
     // combine
     VertexLight = ambient + lightColor * diffuse * attenuation;
+
+    for (int i = 0; i < lights.length(); i++) {
+        if (lights[i].position.x == 0.0f)
+            break;
+        vec3 lightPos = lights[i].position;
+        VertexLight += lights[i].color * max(dot(aNormal, normalize(lightPos - aPos)), 0.0) * (1.0 / (lights[i].attenuation * (length(lightPos - aPos))));
+    }
+
     TexCoords = aTexCoords;
 
     if (entity)

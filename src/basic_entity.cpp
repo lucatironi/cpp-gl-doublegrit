@@ -26,7 +26,7 @@ void BasicEntity::Draw()
     glm::mat4 modelMat = glm::mat4(1.0f);
     modelMat = glm::translate(modelMat, Position);
 
-    modelMat = glm::translate(modelMat, glm::vec3(0.5f * size.x, 0.5f * size.y, 0.5f * size.z));
+    modelMat = glm::translate(modelMat, size * 0.5f;
     modelMat = glm::rotate(modelMat, rotation, glm::vec3(0.0f, 1.0f, 0.0f));
     modelMat = glm::translate(modelMat, size * -0.5f);
 
