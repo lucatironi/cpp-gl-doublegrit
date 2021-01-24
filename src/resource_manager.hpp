@@ -16,10 +16,6 @@
 class ResourceManager
 {
     public:
-        static std::map<std::string, Shader> Shaders;
-        static std::map<std::string, Texture2D> Textures;
-        static std::map<std::string, Model> Models;
-
         static Shader LoadShader(const GLchar *vShaderFilename, const GLchar *fShaderFilename, const GLchar *gShaderFilename, std::string name);
         static Shader GetShader(std::string name);
         static Texture2D LoadTexture(const GLchar *textureFilename, GLboolean alpha, std::string name, GLuint wrap, GLuint filterMin, GLuint filterMax);
@@ -29,11 +25,15 @@ class ResourceManager
         static void Clear();
 
     private:
-      ResourceManager() {}
+        ResourceManager() {}
 
-      static Shader loadShaderFromFilename(const GLchar *vShaderFilename, const GLchar *fShaderFilename, const GLchar *gShaderFilename = nullptr);
-      static Texture2D loadTextureFromFilename(const GLchar *textureFilename, GLboolean alpha, GLuint wrap, GLuint filterMin, GLuint filterMax);
-      static Model loadModelFromFilename(const std::string &path);
+        static std::map<std::string, Shader> shaders;
+        static std::map<std::string, Texture2D> textures;
+        static std::map<std::string, Model> models;
+
+        static Shader loadShaderFromFilename(const GLchar *vShaderFilename, const GLchar *fShaderFilename, const GLchar *gShaderFilename = nullptr);
+        static Texture2D loadTextureFromFilename(const GLchar *textureFilename, GLboolean alpha, GLuint wrap, GLuint filterMin, GLuint filterMax);
+        static Model loadModelFromFilename(const std::string &path);
 };
 
 #endif

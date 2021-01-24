@@ -10,13 +10,14 @@ Level::Level(const GLchar *file, Shader shader) : shader(shader)
 
 Level::~Level()
 {
+    stbi_image_free(levelData);
     glDeleteVertexArrays(1, &VAO);
 }
 
 void Level::Draw(Texture2D texture)
 {
     shader.Use();
-    
+
     for (unsigned int i = 0; i < lights.size(); i++)
     {
         shader.SetVector3f("lights[" + std::to_string(i) + "].position", lights[i].position);
@@ -30,6 +31,10 @@ void Level::Draw(Texture2D texture)
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, vertices.size());
     glBindVertexArray(0);
+}
+GLboolean Level::HasWallAt(GLfloat x, GLfloat z)
+{
+    return tileAt(x, z) == 128;
 }
 
 void Level::pushQuad(GLfloat x1, GLfloat y1, GLfloat z1,
@@ -104,15 +109,15 @@ void Level::pushBlock(GLfloat x, GLfloat z)
 
 void Level::load(const GLchar *file)
 {
-    // Load image
-    int width, height, channels;
-    unsigned char *image = stbi_load(file, &width, &height, &channels, 1);
+    // Load level data from image
+    int channels;
+    levelData = stbi_load(file, &levelWidth, &levelHeight, &channels, 1);
 
-    for (int y = 0; y < height; y++)
+    for (int y = 0; y < levelHeight; y++)
     {
-        for (int x = 0; x < width; x++)
+        for (int x = 0; x < levelWidth; x++)
         {
-            int colorKey = image[width * y + x];
+            int colorKey = levelData[levelWidth * y + x];
 
             switch (colorKey)
             {
@@ -142,8 +147,6 @@ void Level::load(const GLchar *file)
             }
         }
     }
-
-    stbi_image_free(image);
 }
 
 void Level::initRenderData()
@@ -191,4 +194,10 @@ int Level::randomWallTile()
         const int array[] = {7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
         return array[rand() % 10];
     }
+}
+
+int Level::tileAt(GLfloat x, GLfloat z)
+{
+    int pos = levelWidth * (int)z + (int)x;
+    return levelData[pos];
 }

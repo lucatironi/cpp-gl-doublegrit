@@ -5,7 +5,7 @@
 #include "game.hpp"
 
 bool pixelate = true;
-bool retro = true;
+bool retro = false;
 bool freeCam = false;
 bool showStats = true;
 
@@ -13,11 +13,11 @@ Game::Game(GLFWwindow *window, GLuint windowWidth, GLuint windowHeight, GLuint f
     : State(GAME_MENU),
       Keys(),
       KeysProcessed(),
-      Window(window),
-      WindowWidth(windowWidth),
-      WindowHeight(windowHeight),
-      FramebufferWidth(framebufferWidth),
-      FramebufferHeight(framebufferHeight)
+      window(window),
+      windowWidth(windowWidth),
+      windowHeight(windowHeight),
+      framebufferWidth(framebufferWidth),
+      framebufferHeight(framebufferHeight)
 {
     lastMouseX = windowWidth / 2.0f;
     lastMouseY = windowHeight / 2.0f;
@@ -26,11 +26,12 @@ Game::Game(GLFWwindow *window, GLuint windowWidth, GLuint windowHeight, GLuint f
 
 Game::~Game()
 {
-    delete Player;
-    delete Text;
-    delete Pixel;
-    delete FreeCam;
-    SoundEngine->drop();
+    delete player;
+    delete textRenderer;
+    delete pixelator;
+    delete freeCamera;
+    delete currentLevel;
+    soundEngine->drop();
 }
 
 void Game::Init()
@@ -40,31 +41,44 @@ void Game::Init()
     ResourceManager::LoadShader("../src/shaders/text.vs", "../src/shaders/text.fs", nullptr, "text");
 
     // Configure Text Renderer
-    glm::mat4 ortho = glm::ortho(0.0f, static_cast<GLfloat>(WindowWidth), static_cast<GLfloat>(WindowHeight), 0.0f, -1.0f, 1.0f);
+    glm::mat4 ortho = glm::ortho(0.0f, static_cast<GLfloat>(windowWidth), static_cast<GLfloat>(windowHeight), 0.0f, -1.0f, 1.0f);
     ResourceManager::GetShader("text").Use().SetMatrix4("projection", ortho);
     ResourceManager::GetShader("text").Use().SetInteger("text", 0);
-    Text = new TextRenderer(ResourceManager::GetShader("text"));
-    Text->LoadFont("../assets/PressStart2P-Regular.ttf", 16);
+    textRenderer = new TextRenderer(ResourceManager::GetShader("text"));
+    textRenderer->LoadFont("../assets/PressStart2P-Regular.ttf", 16);
 
     // Set render-specific controls
-    Pixel = new Pixelator(WindowWidth, WindowHeight, FramebufferWidth, FramebufferHeight);
+    pixelator = new Pixelator(windowWidth, windowHeight, framebufferWidth, framebufferHeight);
     // Load Tilemap Texture
     ResourceManager::LoadTexture("../assets/tiles.png", GL_TRUE, "tiles", GL_CLAMP_TO_EDGE, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST);
     ResourceManager::LoadTexture("../assets/player.png", GL_FALSE, "player", GL_CLAMP_TO_EDGE, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST);
 
     // Initalize Level
-    CurrentLevel = new Level("../assets/level1.png", ResourceManager::GetShader("gritty"));
+    currentLevel = new Level("../assets/level1.png", ResourceManager::GetShader("gritty"));
 
     // Configure Player
     ResourceManager::LoadModel("../assets/VikingHelmet.obj", "playerModel");
-    Player = new PlayerEntity(CurrentLevel->PlayerStartPosition, glm::vec3(0.25f), ResourceManager::GetShader("gritty"), ResourceManager::GetModel("playerModel"));
+    player = new PlayerEntity(currentLevel->PlayerStartPosition, glm::vec3(0.25f), ResourceManager::GetShader("gritty"), ResourceManager::GetModel("playerModel"));
 
     // Configure Camera
-    FreeCam = new Camera(Player->Position, glm::vec3(0.0f, 1.0f, 0.0f));
-    UpdateCamera();
+    freeCamera = new Camera();
+    freeCamera->Position = glm::vec3(player->Position.x, player->Position.y + 1.0f, player->Position.z);
+    updateCamera();
 
     // Initialize other objects
-    SoundEngine = createIrrKlangDevice();
+    soundEngine = createIrrKlangDevice();
+}
+
+void Game::Reset()
+{
+    initPlayer();
+}
+
+void Game::DoTheMainLoop(GLfloat deltaTime)
+{
+    ProcessInput(deltaTime);
+    Update(deltaTime);
+    Render(deltaTime);
 }
 
 void Game::ProcessInput(GLfloat deltaTime)
@@ -75,7 +89,7 @@ void Game::ProcessInput(GLfloat deltaTime)
         if (Keys[GLFW_KEY_ESCAPE] && !KeysProcessed[GLFW_KEY_ESCAPE])
         {
             KeysProcessed[GLFW_KEY_ESCAPE] = GL_TRUE;
-            glfwSetWindowShouldClose(Window, GL_TRUE);
+            glfwSetWindowShouldClose(window, GL_TRUE);
         }
         // ENTER (re)starts the game
         if (Keys[GLFW_KEY_ENTER] && !KeysProcessed[GLFW_KEY_ENTER])
@@ -115,38 +129,38 @@ void Game::ProcessInput(GLfloat deltaTime)
         if (freeCam)
         {
             if (Keys[GLFW_KEY_W]) // Forward
-                FreeCam->ProcessKeyboard(CAMERA_FORWARD, deltaTime);
+                freeCamera->ProcessKeyboard(CAMERA_FORWARD, deltaTime);
             if (Keys[GLFW_KEY_S]) // Backward
-                FreeCam->ProcessKeyboard(CAMERA_BACKWARD, deltaTime);
+                freeCamera->ProcessKeyboard(CAMERA_BACKWARD, deltaTime);
             if (Keys[GLFW_KEY_A]) // Left
-                FreeCam->ProcessKeyboard(CAMERA_LEFT, deltaTime);
+                freeCamera->ProcessKeyboard(CAMERA_LEFT, deltaTime);
             if (Keys[GLFW_KEY_D]) // Right
-                FreeCam->ProcessKeyboard(CAMERA_RIGHT, deltaTime);
+                freeCamera->ProcessKeyboard(CAMERA_RIGHT, deltaTime);
             if (Keys[GLFW_KEY_Q]) // Down
-                FreeCam->ProcessKeyboard(CAMERA_DOWN, deltaTime);
+                freeCamera->ProcessKeyboard(CAMERA_DOWN, deltaTime);
             if (Keys[GLFW_KEY_E]) // Up
-                FreeCam->ProcessKeyboard(CAMERA_UP, deltaTime);
+                freeCamera->ProcessKeyboard(CAMERA_UP, deltaTime);
         }
         else
         {
             if (Keys[GLFW_KEY_W] && !Keys[GLFW_KEY_S]) // Forward
-                Player->Move(FORWARD);
+                player->Move(FORWARD);
             else if (Keys[GLFW_KEY_S] && !Keys[GLFW_KEY_W]) // Backward
-                Player->Move(BACKWARD);
+                player->Move(BACKWARD);
             else
-                Player->Stop(LONGITUDINAL);
+                player->Stop(LONGITUDINAL);
 
             if (Keys[GLFW_KEY_A] && !Keys[GLFW_KEY_D]) // Left
-                Player->Move(LEFT);
+                player->Move(LEFT);
             else if (Keys[GLFW_KEY_D] && !Keys[GLFW_KEY_A]) // Right
-                Player->Move(RIGHT);
+                player->Move(RIGHT);
             else
-                Player->Stop(LATERAL);
+                player->Stop(LATERAL);
         }
 
         if (Keys[GLFW_KEY_SPACE] && !KeysProcessed[GLFW_KEY_SPACE])
         {
-            Player->Jump();
+            player->Jump();
             KeysProcessed[GLFW_KEY_SPACE] = GL_TRUE;
         }
         // 1 Toggle Pixelate
@@ -199,7 +213,7 @@ void Game::ProcessMouse(GLfloat xpos, GLfloat ypos)
 
     if (State == GAME_ACTIVE)
     {
-        FreeCam->ProcessMouseMovement(xoffset, yoffset);
+        freeCamera->ProcessMouseMovement(xoffset, yoffset);
     }
 }
 
@@ -207,8 +221,14 @@ void Game::Update(GLfloat deltaTime)
 {
     if (State == GAME_ACTIVE)
     {
-        UpdateCamera();
-        Player->Update(deltaTime);
+        glm::vec3 playerLastPosition = player->Position;
+        updateCamera();
+        player->Update(deltaTime);
+        if (currentLevel->HasWallAt(player->Position.x, player->Position.z))
+        {
+            player->Position.x = playerLastPosition.x;
+            player->Position.z = playerLastPosition.z;
+        }
     }
 }
 
@@ -223,68 +243,64 @@ void Game::Render(GLfloat deltaTime)
         State == GAME_WIN)
     {
         if (pixelate)
-            Pixel->BeginRender();
+            pixelator->BeginRender();
 
-        CurrentLevel->Draw(ResourceManager::GetTexture("tiles"));
-        Player->Draw();
+        currentLevel->Draw(ResourceManager::GetTexture("tiles"));
+        player->Draw();
 
         if (pixelate)
-            Pixel->EndRender();
+            pixelator->EndRender();
     }
 
     if (State == GAME_PAUSED)
     {
-        Text->RenderText("PAUSED", WindowWidth / 2.0f - 50.0f, WindowHeight / 2.0f - 50.0f, 1.0f);
-        Text->RenderText("PRESS ENTER TO CONTINUE", WindowWidth / 2.0f - 190.0f, WindowHeight / 2.0f - 20.0f, 1.0f);
-        Text->RenderText("PRESS ESC TO EXIT TO MENU", WindowWidth / 2.0f - 210.0f, WindowHeight / 2.0f + 10.0f, 1.0f);
+        textRenderer->RenderText("PAUSED", windowWidth / 2.0f - 50.0f, windowHeight / 2.0f - 50.0f, 1.0f);
+        textRenderer->RenderText("PRESS ENTER TO CONTINUE", windowWidth / 2.0f - 190.0f, windowHeight / 2.0f - 20.0f, 1.0f);
+        textRenderer->RenderText("PRESS ESC TO EXIT TO MENU", windowWidth / 2.0f - 210.0f, windowHeight / 2.0f + 10.0f, 1.0f);
     }
     if (State == GAME_MENU)
     {
-        Text->RenderText("PRESS ENTER TO START", WindowWidth / 2.0f - 150.0f, WindowHeight / 2.0f - 20.0f, 1.0f);
-        Text->RenderText("PRESS ESC TO QUIT", WindowWidth / 2.0f - 120.0f, WindowHeight / 2.0f + 10.0f, 1.0f);
+        textRenderer->RenderText("PRESS ENTER TO START", windowWidth / 2.0f - 150.0f, windowHeight / 2.0f - 20.0f, 1.0f);
+        textRenderer->RenderText("PRESS ESC TO QUIT", windowWidth / 2.0f - 120.0f, windowHeight / 2.0f + 10.0f, 1.0f);
     }
     if (showStats)
     {
         // Render FPS counter and player position
         std::stringstream stats;
         stats << std::fixed << std::setprecision(1)
-                    << "x:" << Player->Position.x
-                    << " y:" << Player->Position.y
-                    << " z:" << Player->Position.z
+                    << "x:" << player->Position.x
+                    << " y:" << player->Position.y
+                    << " z:" << player->Position.z
                     << " fps:" << (int)(1 / deltaTime);
-        Text->RenderText(stats.str(), WindowWidth - 220.0f, 5.0f, 0.5f);
+        textRenderer->RenderText(stats.str(), windowWidth - 220.0f, 5.0f, 0.5f);
     }
 }
 
-void Game::Reset()
+void Game::initPlayer()
 {
-    InitPlayer();
+    player->Position = currentLevel->PlayerStartPosition;
 }
 
-void Game::InitPlayer()
+void Game::updateCamera()
 {
-    Player->Position = CurrentLevel->PlayerStartPosition;
-}
-
-void Game::UpdateCamera()
-{
-    CamPosition = Player->Position + glm::vec3(0.0f, 2.5f, 2.0f);
-    glm::mat4 perspective = glm::perspective(glm::radians(90.0f), static_cast<GLfloat>(WindowWidth) / static_cast<GLfloat>(WindowHeight), 0.1f, 100.0f);
+    camPosition = player->Position + glm::vec3(0.0f, 2.0f, 2.0f);
+    glm::mat4 perspective = glm::perspective(glm::radians(90.0f), static_cast<GLfloat>(windowWidth) / static_cast<GLfloat>(windowHeight), 0.1f, 100.0f);
     glm::mat4 view;
     glm::vec3 playerPos;
     glm::vec3 lightColor = glm::vec3(0.5f, 0.25f, 0.0f);
 
-    if(freeCam)
+    if (freeCam)
     {
-        view = FreeCam->GetViewMatrix();
-        playerPos = FreeCam->Position;
+        view = freeCamera->GetViewMatrix();
+        playerPos = freeCamera->Position;
     }
     else
     {
-        view = glm::lookAt(CamPosition, Player->Position, glm::vec3(0.0f, 1.0f, 0.0f));
-        playerPos = Player->Position;
+        view = glm::lookAt(camPosition, player->Position, glm::vec3(0.0f, 1.0f, 0.0f));
+        playerPos = player->Position;
+        playerPos.x += 0.2f;
         playerPos.y = 0.5f;
-        playerPos.x += 0.1f;
+        playerPos.z += 0.2f;
     }
 
     ResourceManager::GetShader("gritty").Use().SetInteger("freeCam", freeCam);

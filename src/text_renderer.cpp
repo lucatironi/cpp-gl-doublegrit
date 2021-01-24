@@ -19,7 +19,7 @@ TextRenderer::~TextRenderer()
 void TextRenderer::LoadFont(std::string font, GLuint fontSize)
 {
     // First clear the previously loaded Characters
-    Characters.clear();
+    characters.clear();
     // Then initialize and load the FreeType library
     FT_Library ft;
     if (FT_Init_FreeType(&ft)) // All functions return a value different than 0 whenever an error occurred
@@ -58,8 +58,8 @@ void TextRenderer::LoadFont(std::string font, GLuint fontSize)
         // Set texture options
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         // Now store character for later use
         Character character = {
@@ -67,7 +67,7 @@ void TextRenderer::LoadFont(std::string font, GLuint fontSize)
             glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
             glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
             GLuint(face->glyph->advance.x)};
-        Characters.insert(std::pair<GLchar, Character>(c, character));
+        characters.insert(std::pair<GLchar, Character>(c, character));
     }
     glBindTexture(GL_TEXTURE_2D, 0);
     // Destroy FreeType once we're finished
@@ -87,10 +87,10 @@ void TextRenderer::RenderText(std::string text, GLfloat x, GLfloat y, GLfloat sc
     std::string::const_iterator c;
     for (c = text.begin(); c != text.end(); c++)
     {
-        Character ch = Characters[*c];
+        Character ch = characters[*c];
 
         GLfloat xpos = x + ch.Bearing.x * scale;
-        GLfloat ypos = y + (Characters['H'].Bearing.y - ch.Bearing.y) * scale;
+        GLfloat ypos = y + (characters['H'].Bearing.y - ch.Bearing.y) * scale;
 
         GLfloat w = ch.Size.x * scale;
         GLfloat h = ch.Size.y * scale;

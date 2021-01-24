@@ -13,8 +13,7 @@
                 "${workspaceRoot}/vendor/glfw/include",
                 "${workspaceRoot}/vendor/glm",
                 "${workspaceRoot}/vendor/irrKlang/include",
-                "${workspaceRoot}/vendor/stb",
-                "${workspaceFolder}/build/vendor/assimp/include"
+                "${workspaceRoot}/vendor/stb"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",

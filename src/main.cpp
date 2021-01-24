@@ -1,33 +1,41 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <iostream>
+#include <ostream>
 
 #include "game.hpp"
 #include "resource_manager.hpp"
 
-void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
-void mouse_callback(GLFWwindow *window, double xpos, double ypos);
+void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mode);
+void MouseCallback(GLFWwindow *window, double xpos, double ypos);
 
 const unsigned int WindowWidth  = 800;
 const unsigned int WindowHeight = 600;
 
-const float framebufferRatio = 1.0 / 4.0;
+const float FramebufferRatio = 1.0f / 4.0f;
 
 Game *DoubleGrit;
 
 int main()
 {
     glfwInit();
+
+    GLFWmonitor *primaryMonitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode *mode = glfwGetVideoMode(primaryMonitor);
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    GLFWwindow *window = glfwCreateWindow(WindowWidth, WindowHeight, "Double Grit", nullptr, nullptr);
+    glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+    glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+    glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+    glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+
+    GLFWwindow *window = glfwCreateWindow(mode->width, mode->height, "Double Grit", primaryMonitor, nullptr);
     if (window == nullptr)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -35,8 +43,8 @@ int main()
         return -1;
     }
     glfwMakeContextCurrent(window);
-    glfwSetKeyCallback(window, key_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetKeyCallback(window, KeyCallback);
+    glfwSetCursorPosCallback(window, MouseCallback);
     // glfwSwapInterval(0); // Disable vsync
 
     // tell GLFW to capture our mouse
@@ -55,7 +63,7 @@ int main()
     int framebufferWidth, framebufferHeight;
     glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
 
-    DoubleGrit = new Game(window, framebufferWidth, framebufferHeight, WindowWidth * framebufferRatio, WindowHeight * framebufferRatio);
+    DoubleGrit = new Game(window, framebufferWidth, framebufferHeight, WindowWidth * FramebufferRatio, WindowHeight * FramebufferRatio);
     DoubleGrit->Init();
 
     GLfloat deltaTime = 0.0f;
@@ -69,9 +77,7 @@ int main()
 
         glfwPollEvents();
 
-        DoubleGrit->ProcessInput(deltaTime);
-        DoubleGrit->Update(deltaTime);
-        DoubleGrit->Render(deltaTime);
+        DoubleGrit->DoTheMainLoop(deltaTime);
 
         glfwSwapBuffers(window);
     }
@@ -82,7 +88,7 @@ int main()
     return 0;
 }
 
-void key_callback(GLFWwindow* /* window */, int key, int /* scancode */, int action, int /* mods */)
+void KeyCallback(GLFWwindow* /* window */, int key, int /* scancode */, int action, int /* mods */)
 {
     if (key >= 0 && key < 1024)
     {
@@ -96,7 +102,7 @@ void key_callback(GLFWwindow* /* window */, int key, int /* scancode */, int act
     }
 }
 
-void mouse_callback(GLFWwindow* /* window */, double xpos, double ypos)
+void MouseCallback(GLFWwindow* /* window */, double xpos, double ypos)
 {
     DoubleGrit->ProcessMouse(xpos, ypos);
 }

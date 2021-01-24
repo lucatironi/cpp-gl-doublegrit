@@ -1,5 +1,5 @@
-#ifndef BASICENTITY_H
-#define BASICENTITY_H
+#ifndef BASIC_ENTITY_H
+#define BASIC_ENTITY_H
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>

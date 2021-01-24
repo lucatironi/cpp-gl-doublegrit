@@ -1,5 +1,5 @@
-#ifndef PLAYERENTITY_H
-#define PLAYERENTITY_H
+#ifndef PLAYER_ENTITY_H
+#define PLAYER_ENTITY_H
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -14,10 +14,10 @@
 // Defines several possible options for player movement. Used as abstraction to stay away from window-system specific input methods
 enum PlayerDirection
 {
-    FORWARD,
     BACKWARD,
-    LEFT,
-    RIGHT
+    RIGHT,
+    FORWARD,
+    LEFT
 };
 
 enum PlayerAxis
@@ -30,6 +30,9 @@ const GLfloat GRAVITY = 9.8f;
 const GLfloat PLAYER_ACCELERATION = 15.0f;
 const GLfloat PLAYER_FRICTION = 5.0f;
 const GLfloat PLAYER_JUMP_VELOCITY = 4.0f;
+const GLfloat PLAYER_TURN_SPEED = 20.0f;
+
+GLfloat shortestAngle(GLfloat current, GLfloat target);
 
 class PlayerEntity
 {

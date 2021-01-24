@@ -4,7 +4,7 @@
 #include <vector>
 
 Pixelator::Pixelator(GLuint windowWidth, GLuint windowHeight, GLuint framebufferWidth, GLuint framebufferHeight)
-    : WindowWidth(windowWidth), WindowHeight(windowHeight), FramebufferWidth(framebufferWidth), FramebufferHeight(framebufferHeight)
+    : windowWidth(windowWidth), windowHeight(windowHeight), framebufferWidth(framebufferWidth), framebufferHeight(framebufferHeight)
 {
     // Initialize framebuffer/renderbuffers objects
     glGenFramebuffers(1, &FBO);
@@ -46,7 +46,7 @@ void Pixelator::BeginRender()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, FBO);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glViewport(0, 0, FramebufferWidth, FramebufferHeight);
+    glViewport(0, 0, framebufferWidth, framebufferHeight);
 }
 
 void Pixelator::EndRender()
@@ -60,12 +60,12 @@ void Pixelator::EndRender()
 
     // copy:
     glBlitFramebuffer(
-        0, 0, FramebufferWidth, FramebufferHeight, // source area: we rendered into framebufferwidth X framebufferheight
-        0, 0, WindowWidth,      WindowHeight,      // destination area: copy only the area in which we rendered
+        0, 0, framebufferWidth, framebufferHeight, // source area: we rendered into framebufferwidth X framebufferheight
+        0, 0, windowWidth,      windowHeight,      // destination area: copy only the area in which we rendered
         GL_COLOR_BUFFER_BIT,                       // buffer bitfield: copy the color only (from location "GL_COLOR_ATTACHMENT0")
         GL_NEAREST);                               // filtering parameter
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // Binds both READ and WRITE framebuffer to default framebuffer
 
-    glViewport(0, 0, WindowWidth, WindowHeight);
+    glViewport(0, 0, windowWidth, windowHeight);
 }

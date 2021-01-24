@@ -16,7 +16,7 @@ void main()
     if (!freeCam)
     {
         float distance = gl_FragCoord.z / gl_FragCoord.w;
-        FragColor.rgb *= smoothstep(7.5, 0.5, distance);
+        FragColor.rgb *= smoothstep(5.0, 0.1, distance);
     }
     if (retro)
     {

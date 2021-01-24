@@ -4,50 +4,50 @@
 #include <stb_image.h>
 
 // Instantiate static variables
-std::map<std::string, Texture2D> ResourceManager::Textures;
-std::map<std::string, Shader> ResourceManager::Shaders;
-std::map<std::string, Model> ResourceManager::Models;
+std::map<std::string, Texture2D> ResourceManager::textures;
+std::map<std::string, Shader> ResourceManager::shaders;
+std::map<std::string, Model> ResourceManager::models;
 
 Shader ResourceManager::LoadShader(const GLchar *vShaderFilename, const GLchar *fShaderFilename, const GLchar *gShaderFilename, std::string name)
 {
-    Shaders[name] = loadShaderFromFilename(vShaderFilename, fShaderFilename, gShaderFilename);
-    return Shaders[name];
+    shaders[name] = loadShaderFromFilename(vShaderFilename, fShaderFilename, gShaderFilename);
+    return shaders[name];
 }
 
 Shader ResourceManager::GetShader(std::string name)
 {
-    return Shaders[name];
+    return shaders[name];
 }
 
 Texture2D ResourceManager::LoadTexture(const GLchar *textureFilename, GLboolean alpha, std::string name, GLuint wrap, GLuint filterMin, GLuint filterMax)
 {
-    Textures[name] = loadTextureFromFilename(textureFilename, alpha, wrap, filterMin, filterMax);
-    return Textures[name];
+    textures[name] = loadTextureFromFilename(textureFilename, alpha, wrap, filterMin, filterMax);
+    return textures[name];
 }
 
 Texture2D ResourceManager::GetTexture(std::string name)
 {
-    return Textures[name];
+    return textures[name];
 }
 
 Model ResourceManager::LoadModel(const GLchar *modelFilename, std::string name)
 {
-    Models[name] = loadModelFromFilename(modelFilename);
-    return Models[name];
+    models[name] = loadModelFromFilename(modelFilename);
+    return models[name];
 }
 
 Model ResourceManager::GetModel(std::string name)
 {
-    return Models[name];
+    return models[name];
 }
 
 void ResourceManager::Clear()
 {
     // (Properly) delete all shaders
-    for (auto iter : Shaders)
+    for (auto iter : shaders)
         glDeleteProgram(iter.second.ID);
     // (Properly) delete all textures
-    for (auto iter : Textures)
+    for (auto iter : textures)
         glDeleteTextures(1, &iter.second.ID);
 }
 
@@ -101,13 +101,13 @@ Texture2D ResourceManager::loadTextureFromFilename(const GLchar *textureFilename
     Texture2D texture;
     if (alpha)
     {
-        texture.Internal_Format = GL_RGBA;
-        texture.Image_Format = GL_RGBA;
+        texture.InternalFormat = GL_RGBA;
+        texture.ImageFormat = GL_RGBA;
     }
-    texture.Wrap_S = wrap;
-    texture.Wrap_T = wrap;
-    texture.Filter_Min = filterMin;
-    texture.Filter_Max = filterMax;
+    texture.WrapS = wrap;
+    texture.WrapT = wrap;
+    texture.FilterMin = filterMin;
+    texture.FilterMax = filterMax;
     // Load image
     int width, height, channels;
     unsigned char *image = stbi_load(textureFilename, &width, &height, &channels, 0);
@@ -122,18 +122,17 @@ Model ResourceManager::loadModelFromFilename(const std::string &path)
     Model model;
     // read file via ASSIMP
     Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices);
+    const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices);
     // check for errors
-    if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
+    if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
         std::cout << "ERROR::ASSIMP: " << importer.GetErrorString() << std::endl;
     }
     else {
         // retrieve the directory path of the filepath
-        model.directory = path.substr(0, path.find_last_of('/'));
+        model.SetDirectory(path.substr(0, path.find_last_of('/')));
 
-        // process ASSIMP's root node recursively
-        model.ProcessNode(scene->mRootNode, scene);
+        model.Init(scene);
     }
     return model;
 }

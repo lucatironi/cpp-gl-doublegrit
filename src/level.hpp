@@ -23,11 +23,16 @@ class Level
         ~Level();
 
         glm::vec3 PlayerStartPosition;
+
         void Draw(Texture2D texture);
+        GLboolean HasWallAt(GLfloat x, GLfloat z);
 
     private:
         const GLfloat tileFraction = 16.0f / 1024.0f;
         const GLfloat quadSize = 1.0f;
+
+        int levelWidth, levelHeight;
+        unsigned char *levelData;
 
         Shader shader;
         GLuint VAO;
@@ -46,6 +51,7 @@ class Level
         void pushBlock(GLfloat x, GLfloat z);
         int randomFloorTile();
         int randomWallTile();
+        int tileAt(GLfloat x, GLfloat z);
 };
 
 #endif

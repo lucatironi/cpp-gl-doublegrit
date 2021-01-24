@@ -26,20 +26,27 @@ unsigned int TextureFromFile(const char *path, const std::string &directory, boo
 class Model
 {
     public:
-        std::vector<Texture> textures_loaded; // stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
-        std::vector<Mesh> meshes;
-        std::string directory;
-
         Model() {};
 
-        // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
-        void ProcessNode(aiNode *node, const aiScene *scene);
+        void Init(const aiScene *scene);
 
         // draws the model, and thus all its meshes
         void Draw(Shader shader);
 
-    private:
+        void SetDirectory(std::string directory) { this->directory = directory; }
 
+    private:
+        aiMatrix4x4 globalInverseTransformMatrix;
+        GLfloat ticksPerSecond;
+
+        std::string directory;
+        std::vector<Mesh> meshes;
+        // stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
+        std::vector<Texture> loadedTextures;
+
+        // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
+        void processNode(aiNode *node, const aiScene *scene);
+        void showNodeName(aiNode* node);
         Mesh processMesh(aiMesh *mesh, const aiScene *scene);
 
         // checks all material textures of a given type and loads the textures if they're not loaded yet.

@@ -37,6 +37,8 @@ class Game
         void Init();
         void Reset();
 
+        void DoTheMainLoop(GLfloat deltaTime);
+
         void ProcessInput(GLfloat deltaTime);
         void ProcessMouse(GLfloat xpos, GLfloat ypos);
 
@@ -44,22 +46,22 @@ class Game
         void Render(GLfloat deltaTime);
 
     private:
-        GLFWwindow *Window;
-        GLuint WindowWidth, WindowHeight, FramebufferWidth, FramebufferHeight;
+        GLFWwindow *window;
+        GLuint windowWidth, windowHeight, framebufferWidth, framebufferHeight;
         GLfloat lastMouseX, lastMouseY;
         bool firstMouse;
 
-        Pixelator      *Pixel;
-        TextRenderer   *Text;
-        ISoundEngine   *SoundEngine;
+        Pixelator      *pixelator;
+        TextRenderer   *textRenderer;
+        ISoundEngine   *soundEngine;
 
-        Camera         *FreeCam;
-        glm::vec3      CamPosition;
-        PlayerEntity   *Player;
-        Level          *CurrentLevel;
+        Camera         *freeCamera;
+        glm::vec3      camPosition;
+        PlayerEntity   *player;
+        Level          *currentLevel;
 
-        void InitPlayer();
-        void UpdateCamera();
+        void initPlayer();
+        void updateCamera();
 };
 
 #endif

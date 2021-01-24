@@ -4,7 +4,7 @@ PlayerEntity::PlayerEntity(glm::vec3 position, glm::vec3 size, Shader shader, Mo
     Position(position),
     size(size),
     direction(FORWARD),
-    rotation(180.0f),
+    rotation(FORWARD * 90.0f),
     acceleration(glm::vec3(0.0f)),
     velocity(glm::vec3(0.0f)),
     shader(shader),
@@ -20,19 +20,29 @@ void PlayerEntity::Move(PlayerDirection direction)
 {
     this->direction = direction;
 
-    if (direction == FORWARD)
+    switch (direction)
+    {
+    case FORWARD:
         acceleration.z = -PLAYER_ACCELERATION;
-    if (direction == BACKWARD)
+        break;
+    case BACKWARD:
         acceleration.z = PLAYER_ACCELERATION;
-    if (direction == LEFT)
+        break;
+    case LEFT:
         acceleration.x = -PLAYER_ACCELERATION;
-    if (direction == RIGHT)
+        break;
+    case RIGHT:
         acceleration.x = PLAYER_ACCELERATION;
+        break;
+    default:
+        break;
+    }
 }
 
 void PlayerEntity::Jump()
 {
-    velocity.y = PLAYER_JUMP_VELOCITY;
+    if (Position.y == 0.0f) // jump only when on the ground
+        velocity.y = PLAYER_JUMP_VELOCITY;
 }
 
 void PlayerEntity::Stop(PlayerAxis axis)
@@ -45,47 +55,15 @@ void PlayerEntity::Stop(PlayerAxis axis)
 
 void PlayerEntity::Update(GLfloat deltaTime)
 {
-    GLfloat desiredRotation;
-
-    if (direction == FORWARD)
-        desiredRotation = 180.0f;
-    if (direction == BACKWARD)
-        desiredRotation = 0.0f;
-    if (direction == LEFT)
-        desiredRotation = 270.0f;
-    if (direction == RIGHT)
-        desiredRotation = 90.0f;
-
-    GLfloat deltaRotation = desiredRotation - rotation;
-    if (rotation >= 360.0f)
-        rotation = 0.0f;
-
-    if (abs(deltaRotation) > 0.9f)
-    {
-        if (rotation < desiredRotation)
-        {
-            if (abs(rotation - desiredRotation) < 180.0f)
-                rotation += deltaRotation * 10.0f * deltaTime;
-            else
-                rotation -= deltaRotation * 10.0f * deltaTime;
-        }
-        else
-        {
-            if (abs(rotation - desiredRotation) < 180.0f)
-                rotation -= deltaRotation * 10.0f * deltaTime;
-            else
-                rotation += deltaRotation * 10.0f * deltaTime;
-        }
-        
-        std::cout << "desired: " << desiredRotation << " rotation: " << rotation << " delta: " << deltaRotation << std::endl;
-    }
+    GLfloat targetRotation = direction * 90.0f;
+    if ((int)rotation != targetRotation)
+        rotation += shortestAngle(rotation, targetRotation) * PLAYER_TURN_SPEED * deltaTime;
+    rotation = fmod(rotation, 360.0f);
 
     velocity += acceleration * deltaTime - velocity * std::min(PLAYER_FRICTION * deltaTime, 1.0f);
     velocity.y -= GRAVITY * deltaTime - velocity.y * std::min(PLAYER_FRICTION * deltaTime, 1.0f);
     Position += velocity * deltaTime;
-
-    if (Position.y < 0.0f)
-        Position.y = 0.0f;
+    Position.y = glm::clamp(Position.y, 0.0f, 1.0f);
 }
 
 void PlayerEntity::Draw()
@@ -99,7 +77,16 @@ void PlayerEntity::Draw()
     shader.Use();
     shader.SetInteger("entity", true);
     shader.SetMatrix4("model", modelMat);
+
     model.Draw(shader);
 
     shader.SetInteger("entity", false);
+}
+
+GLfloat shortestAngle(GLfloat current, GLfloat target)
+{
+    GLfloat angle = (target - current) / 360.0f;
+    angle -= floor(angle + 0.5f);
+    angle *= 360;
+    return angle;
 }

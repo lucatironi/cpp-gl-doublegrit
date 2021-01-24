@@ -8,9 +8,6 @@
 class Pixelator
 {
     public:
-        GLuint WindowWidth, WindowHeight;
-        GLuint FramebufferWidth, FramebufferHeight;
-
         Pixelator(GLuint windowWidth, GLuint windowHeight, GLuint framebufferWidth, GLuint framebufferHeight);
         ~Pixelator();
 
@@ -19,6 +16,7 @@ class Pixelator
         void Render(GLfloat time);
 
     private:
+        GLuint windowWidth, windowHeight, framebufferWidth, framebufferHeight;
         GLuint FBO, colorRBO, depthRBO; // framebuffer, color and depth renderbuffers
 };
 

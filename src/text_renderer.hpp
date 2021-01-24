@@ -28,7 +28,7 @@ class TextRenderer
     private:
         Shader shader;
         GLuint VBO, quadVAO;
-        std::map<GLchar, Character> Characters;
+        std::map<GLchar, Character> characters;
 
         void initRenderData();
 };

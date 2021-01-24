@@ -18,6 +18,11 @@
             "command": "make -j 8 && ${workspaceRoot}/build/doublegrit/doublegrit",
             "group": "build",
             "problemMatcher": []
+        },
+        {
+            "label": "run",
+            "command": "${workspaceRoot}/build/doublegrit/doublegrit",
+            "problemMatcher": []
         }
     ]
 }
