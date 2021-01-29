@@ -6,7 +6,7 @@
 // Instantiate static variables
 std::map<std::string, Texture2D> ResourceManager::textures;
 std::map<std::string, Shader> ResourceManager::shaders;
-std::map<std::string, Model> ResourceManager::models;
+std::map<std::string, AnimatedModel> ResourceManager::models;
 
 Shader ResourceManager::LoadShader(const GLchar *vShaderFilename, const GLchar *fShaderFilename, const GLchar *gShaderFilename, std::string name)
 {
@@ -30,13 +30,13 @@ Texture2D ResourceManager::GetTexture(std::string name)
     return textures[name];
 }
 
-Model ResourceManager::LoadModel(const GLchar *modelFilename, std::string name)
+AnimatedModel ResourceManager::LoadModel(const GLchar *modelFilename, std::string name)
 {
     models[name] = loadModelFromFilename(modelFilename);
     return models[name];
 }
 
-Model ResourceManager::GetModel(std::string name)
+AnimatedModel ResourceManager::GetModel(std::string name)
 {
     return models[name];
 }
@@ -117,22 +117,22 @@ Texture2D ResourceManager::loadTextureFromFilename(const GLchar *textureFilename
     return texture;
 }
 
-Model ResourceManager::loadModelFromFilename(const std::string &path)
+AnimatedModel ResourceManager::loadModelFromFilename(const std::string &path)
 {
-    Model model;
-    // read file via ASSIMP
-    Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices);
-    // check for errors
-    if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
-    {
-        std::cout << "ERROR::ASSIMP: " << importer.GetErrorString() << std::endl;
-    }
-    else {
-        // retrieve the directory path of the filepath
-        model.SetDirectory(path.substr(0, path.find_last_of('/')));
+    AnimatedModel model;
+    // // read file via ASSIMP
+    // Assimp::Importer importer;
+    // const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices);
+    // // check for errors
+    // if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+    // {
+    //     std::cout << "ERROR::ASSIMP: " << importer.GetErrorString() << std::endl;
+    // }
+    // else {
+    //     // retrieve the directory path of the filepath
+    //     model.SetDirectory(path.substr(0, path.find_last_of('/')));
 
-        model.Init(scene);
-    }
+    //     model.Init(scene);
+    // }
     return model;
 }

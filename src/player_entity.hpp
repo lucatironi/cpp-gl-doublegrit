@@ -7,7 +7,7 @@
 
 #include "texture.hpp"
 #include "shader.hpp"
-#include "model.hpp"
+#include "animated_model.hpp"
 
 #include <string>
 
@@ -39,7 +39,7 @@ class PlayerEntity
     public:
         glm::vec3 Position;
 
-        PlayerEntity(glm::vec3 position, glm::vec3 size, Shader shader, Model model);
+        PlayerEntity(glm::vec3 position, glm::vec3 size, Shader shader, AnimatedModel model);
         ~PlayerEntity();
 
         void Move(PlayerDirection direction);
@@ -55,7 +55,7 @@ class PlayerEntity
         GLfloat rotation;
         glm::vec3 acceleration, velocity;
         Shader shader;
-        Model model;
+        AnimatedModel model;
 };
 
 #endif

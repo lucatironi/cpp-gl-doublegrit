@@ -10,43 +10,14 @@ void Model::Draw(Shader shader)
 void Model::Init(const aiScene *scene)
 {
     globalInverseTransformMatrix = scene->mRootNode->mTransformation;
-	globalInverseTransformMatrix.Inverse();
+    globalInverseTransformMatrix.Inverse();
 
-    if (scene->mAnimations[0]->mTicksPerSecond != 0.0)
-	{
-		ticksPerSecond = scene->mAnimations[0]->mTicksPerSecond;
-	}
-	else
-	{
-		ticksPerSecond = 25.0f;
-	}
+    if (scene->HasAnimations() && scene->mAnimations[0]->mTicksPerSecond != 0.0f)
+        ticksPerSecond = scene->mAnimations[0]->mTicksPerSecond;
+    else
+        ticksPerSecond = 25.0f;
 
-    std::cout << "scene->HasAnimations(): " << scene->HasAnimations() << std::endl;
-	std::cout << "scene->mNumMeshes: " << scene->mNumMeshes << std::endl;
-	std::cout << "scene->mAnimations[0]->mNumChannels: " << scene->mAnimations[0]->mNumChannels << std::endl;
-	std::cout << "scene->mAnimations[0]->mDuration: " << scene->mAnimations[0]->mDuration << std::endl;
-	std::cout << "scene->mAnimations[0]->mTicksPerSecond: " << scene->mAnimations[0]->mTicksPerSecond << std::endl;
-
-	std::cout << "		name nodes: " << std::endl;
-	showNodeName(scene->mRootNode);
-
-	std::cout << "		name bones: " << std::endl;
-	processNode(scene->mRootNode, scene);
-
-	std::cout << "		name nodes animation: " << std::endl;
-	for (uint i = 0; i < scene->mAnimations[0]->mNumChannels; i++)
-	{
-		std::cout << scene->mAnimations[0]->mChannels[i]->mNodeName.C_Str() << std::endl;
-	}
-}
-
-void Model::showNodeName(aiNode* node)
-{
-	std::cout << node->mName.data << std::endl;
-	for (uint i = 0; i < node->mNumChildren; i++)
-	{
-		showNodeName(node->mChildren[i]);
-	}
+    processNode(scene->mRootNode, scene);
 }
 
 // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
@@ -73,6 +44,12 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<Texture> textures;
+    std::vector<VertexBoneData> bonesIDs;
+
+    vertices.reserve(mesh->mNumVertices);
+    indices.reserve(mesh->mNumVertices);
+    textures.reserve(mesh->mNumVertices);
+    bonesIDs.reserve(mesh->mNumVertices);
 
     // Walk through each of the mesh's vertices
     for(unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -134,6 +111,34 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
     // 4. emission maps
     std::vector<Texture> emissionMaps = loadMaterialTextures(material, aiTextureType_EMISSIVE, "texture_emission");
     textures.insert(textures.end(), emissionMaps.begin(), emissionMaps.end());
+
+    // load bones
+    for (unsigned int i = 0; i < mesh->mNumBones; i++)
+    {
+        unsigned int boneIndex = 0;
+        std::string boneName(mesh->mBones[i]->mName.data);
+
+        if (boneMapping.find(boneName) == boneMapping.end())
+        {
+            // Allocate an index for a new bone
+            boneIndex = bonesCount;
+            bonesCount++;
+            BoneMatrix boneMat;
+            boneMatrices.push_back(boneMat);
+        }
+        else
+            boneIndex = boneMapping[boneName];
+
+        boneMapping[boneName] = boneIndex;
+        boneMatrices[boneIndex].offsetMatrix = mesh->mBones[i]->mOffsetMatrix;
+
+        for (unsigned int j = 0; j < mesh->mBones[i]->mNumWeights; j++)
+        {
+            unsigned int vertexID = mesh->mBones[i]->mWeights[j].mVertexId;
+            float weight = mesh->mBones[i]->mWeights[j].mWeight;
+            bonesIDs[vertexID].addBoneData(boneIndex, weight);
+        }
+    }
 
     // return a mesh object created from the extracted mesh data
     return Mesh(vertices, indices, textures);
@@ -202,14 +207,11 @@ unsigned int TextureFromFile(const char *path, const std::string &directory, boo
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        stbi_image_free(data);
     }
     else
-    {
         std::cout << "Texture failed to load at path: " << path << std::endl;
-        stbi_image_free(data);
-    }
+
+    stbi_image_free(data);
 
     return textureID;
 }

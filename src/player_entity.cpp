@@ -1,6 +1,6 @@
 #include "player_entity.hpp"
 
-PlayerEntity::PlayerEntity(glm::vec3 position, glm::vec3 size, Shader shader, Model model) :
+PlayerEntity::PlayerEntity(glm::vec3 position, glm::vec3 size, Shader shader, AnimatedModel model) :
     Position(position),
     size(size),
     direction(FORWARD),

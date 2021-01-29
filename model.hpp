@@ -1,11 +1,9 @@
 #ifndef MODEL_H
 #define MODEL_H
 
-#include <fstream>
-#include <sstream>
-#include <iostream>
 #include <string>
 #include <vector>
+#include <map>
 
 #include <glad/glad.h>
 
@@ -37,16 +35,19 @@ class Model
 
     private:
         aiMatrix4x4 globalInverseTransformMatrix;
-        GLfloat ticksPerSecond;
+        GLfloat ticksPerSecond = 0.0f;
 
         std::string directory;
         std::vector<Mesh> meshes;
         // stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
         std::vector<Texture> loadedTextures;
 
+        unsigned int bonesCount = 0;
+        std::map<std::string, unsigned int> boneMapping;
+        std::vector<BoneMatrix> boneMatrices;
+
         // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
         void processNode(aiNode *node, const aiScene *scene);
-        void showNodeName(aiNode* node);
         Mesh processMesh(aiMesh *mesh, const aiScene *scene);
 
         // checks all material textures of a given type and loads the textures if they're not loaded yet.
