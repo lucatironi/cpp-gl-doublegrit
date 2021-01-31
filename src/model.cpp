@@ -9,44 +9,7 @@ void Model::Draw(Shader shader)
 
 void Model::Init(const aiScene *scene)
 {
-    globalInverseTransformMatrix = scene->mRootNode->mTransformation;
-	globalInverseTransformMatrix.Inverse();
-
-    if (scene->mAnimations[0]->mTicksPerSecond != 0.0)
-	{
-		ticksPerSecond = scene->mAnimations[0]->mTicksPerSecond;
-	}
-	else
-	{
-		ticksPerSecond = 25.0f;
-	}
-
-    std::cout << "scene->HasAnimations(): " << scene->HasAnimations() << std::endl;
-	std::cout << "scene->mNumMeshes: " << scene->mNumMeshes << std::endl;
-	std::cout << "scene->mAnimations[0]->mNumChannels: " << scene->mAnimations[0]->mNumChannels << std::endl;
-	std::cout << "scene->mAnimations[0]->mDuration: " << scene->mAnimations[0]->mDuration << std::endl;
-	std::cout << "scene->mAnimations[0]->mTicksPerSecond: " << scene->mAnimations[0]->mTicksPerSecond << std::endl;
-
-	std::cout << "		name nodes: " << std::endl;
-	showNodeName(scene->mRootNode);
-
-	std::cout << "		name bones: " << std::endl;
 	processNode(scene->mRootNode, scene);
-
-	std::cout << "		name nodes animation: " << std::endl;
-	for (uint i = 0; i < scene->mAnimations[0]->mNumChannels; i++)
-	{
-		std::cout << scene->mAnimations[0]->mChannels[i]->mNodeName.C_Str() << std::endl;
-	}
-}
-
-void Model::showNodeName(aiNode* node)
-{
-	std::cout << node->mName.data << std::endl;
-	for (uint i = 0; i < node->mNumChildren; i++)
-	{
-		showNodeName(node->mChildren[i]);
-	}
 }
 
 // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).

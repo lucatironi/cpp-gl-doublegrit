@@ -28,28 +28,6 @@ struct Texture
     std::string path;
 };
 
-struct BoneMatrix
-{
-	aiMatrix4x4 offsetMatrix;
-	aiMatrix4x4 finalWorldTransform;
-};
-
-// struct VertexBoneData
-// {
-//      // we have 4 bone ids for EACH vertex & 4 weights for EACH vertex
-// 	unsigned int ids[NUM_BONES_PER_VERTEX];
-// 	float weights[NUM_BONES_PER_VERTEX];
-
-// 	VertexBoneData()
-// 	{
-//         // init all values in array = 0
-// 		memset(ids, 0, sizeof(ids));
-// 		memset(weights, 0, sizeof(weights));
-// 	}
-
-// 	void addBoneData(unsigned int boneID, float weight);
-// };
-
 class Mesh
 {
     public:
