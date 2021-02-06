@@ -120,19 +120,18 @@ Texture2D ResourceManager::loadTextureFromFilename(const GLchar *textureFilename
 AnimatedModel ResourceManager::loadModelFromFilename(const std::string &path)
 {
     AnimatedModel model;
-    // // read file via ASSIMP
-    // Assimp::Importer importer;
-    // const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices);
-    // // check for errors
-    // if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
-    // {
-    //     std::cout << "ERROR::ASSIMP: " << importer.GetErrorString() << std::endl;
-    // }
-    // else {
-    //     // retrieve the directory path of the filepath
-    //     model.SetDirectory(path.substr(0, path.find_last_of('/')));
-
-    //     model.Init(scene);
-    // }
+    // read file via ASSIMP
+    Assimp::Importer importer;
+    const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_LimitBoneWeights | aiProcess_GenSmoothNormals);
+    // check for errors
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+    {
+        std::cout << "ERROR::ASSIMP: " << importer.GetErrorString() << std::endl;
+    }
+    else {
+        // retrieve the directory path of the filepath
+        model.SetDirectory(path.substr(0, path.find_last_of('/')));
+        model.InitFromScene(importer.GetOrphanedScene());
+    }
     return model;
 }
