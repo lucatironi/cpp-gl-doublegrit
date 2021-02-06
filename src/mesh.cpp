@@ -1,10 +1,9 @@
 #include "mesh.hpp"
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures, std::vector<VertexBoneData> bones) :
+Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures) :
     vertices(vertices),
     indices(indices),
-    textures(textures),
-    bones(bones)
+    textures(textures)
 {
     // now that we have all the required data, set the vertex buffers and its attribute pointers.
     setupMesh();
@@ -84,17 +83,4 @@ void Mesh::setupMesh()
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
 
     glBindVertexArray(0);
-}
-
-void VertexBoneData::addBoneData(unsigned int boneID, float weight)
-{
-    for (unsigned int i = 0; i < (sizeof(ids)/sizeof(ids[0])); i++)
-    {
-        if (weights[i] == 0)
-        {
-            ids[i] = boneID;
-            weights[i] = weight;
-            return;
-        }
-    }
 }
