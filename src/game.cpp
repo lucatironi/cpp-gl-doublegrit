@@ -26,6 +26,7 @@ Game::Game(GLFWwindow *window, GLuint windowWidth, GLuint windowHeight, GLuint f
 
 Game::~Game()
 {
+    delete basic;
     delete player;
     delete textRenderer;
     delete pixelator;
@@ -57,8 +58,8 @@ void Game::Init()
     currentLevel = new Level("../assets/level1.png", ResourceManager::GetShader("gritty"));
 
     // Configure Player
-    ResourceManager::LoadModel("../assets/bob_lamp/bob_lamp.md5mesh", "playerModel");
-    player = new PlayerEntity(currentLevel->PlayerStartPosition, glm::vec3(0.025f), ResourceManager::GetShader("gritty"), ResourceManager::GetModel("playerModel"));
+    player = new PlayerEntity(currentLevel->PlayerStartPosition, glm::vec3(0.25f), ResourceManager::GetTexture("player"), ResourceManager::GetShader("gritty"), ResourceManager::LoadModel("../assets/bob_lamp/bob_lamp.md5mesh", "playerModel"));
+    basic = new BasicEntity(currentLevel->PlayerStartPosition + glm::vec3(-1.0f, 0.5f, -1.0f), glm::vec3(0.5f), ResourceManager::GetTexture("player"), ResourceManager::GetShader("gritty"));
 
     // Configure Camera
     freeCamera = new Camera();
@@ -246,7 +247,8 @@ void Game::Render(GLfloat deltaTime)
             pixelator->BeginRender();
 
         currentLevel->Draw(ResourceManager::GetTexture("tiles"));
-        player->Draw();
+        player->Draw(deltaTime);
+        basic->Draw();
 
         if (pixelate)
             pixelator->EndRender();
@@ -297,10 +299,7 @@ void Game::updateCamera()
     else
     {
         view = glm::lookAt(camPosition, player->Position, glm::vec3(0.0f, 1.0f, 0.0f));
-        playerPos = player->Position;
-        playerPos.x += 0.2f;
-        playerPos.y = 0.5f;
-        playerPos.z += 0.2f;
+        playerPos = glm::vec3(player->Position.x + 0.2f, 0.5f, player->Position.z + 0.2f);
     }
 
     ResourceManager::GetShader("gritty").Use().SetInteger("freeCam", freeCam);

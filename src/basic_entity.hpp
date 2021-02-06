@@ -7,7 +7,6 @@
 
 #include "texture.hpp"
 #include "shader.hpp"
-#include "model.hpp"
 
 #include <string>
 
