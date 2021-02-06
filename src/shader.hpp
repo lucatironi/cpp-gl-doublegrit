@@ -2,6 +2,7 @@
 #define SHADER_H
 
 #include <string>
+#include <vector>
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -26,9 +27,10 @@ class Shader
         void SetVector4f(const std::string &name, GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLboolean useShader = false);
         void SetVector4f(const std::string &name, const glm::vec4 &value, GLboolean useShader = false);
         void SetMatrix4(const std::string &name, const glm::mat4 &matrix, GLboolean useShader = false);
+        void SetMatrix4v(const std::string &name, const std::vector<glm::mat4> &matrices, GLboolean useShader = false);
 
     private:
-        void checkCompileErrors(GLuint object, std::string type); 
+        void checkCompileErrors(GLuint object, std::string type);
 };
 
 #endif
