@@ -1,12 +1,13 @@
 #include "player_entity.hpp"
 
-PlayerEntity::PlayerEntity(glm::vec3 position, glm::vec3 size, Shader shader, AnimatedModel model) :
+PlayerEntity::PlayerEntity(glm::vec3 position, glm::vec3 size, Texture2D texture, Shader shader, AnimatedModel model) :
     Position(position),
     size(size),
     direction(FORWARD),
     rotation(FORWARD * 90.0f),
     acceleration(glm::vec3(0.0f)),
     velocity(glm::vec3(0.0f)),
+    texture(texture),
     shader(shader),
     model(model)
 {
@@ -66,7 +67,7 @@ void PlayerEntity::Update(GLfloat deltaTime)
     Position.y = glm::clamp(Position.y, 0.0f, 1.0f);
 }
 
-void PlayerEntity::Draw()
+void PlayerEntity::Draw(GLfloat deltaTime)
 {
     // Prepare transformations
     glm::mat4 modelMat = glm::mat4(1.0f);
@@ -78,6 +79,11 @@ void PlayerEntity::Draw()
     shader.SetInteger("entity", true);
     shader.SetMatrix4("model", modelMat);
 
+    glActiveTexture(GL_TEXTURE0);
+    texture.Bind();
+
+    // Set model transformation
+    model.SetBoneTransformations(shader, deltaTime);
     model.Draw(shader);
 
     shader.SetInteger("entity", false);

@@ -36,7 +36,8 @@ int main()
     glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GL_FALSE);
 #endif
 
-    GLFWwindow *window = glfwCreateWindow(mode->width, mode->height, "Double Grit", primaryMonitor, nullptr);
+    // GLFWwindow *window = glfwCreateWindow(mode->width, mode->height, "Double Grit", primaryMonitor, nullptr);
+    GLFWwindow *window = glfwCreateWindow(WindowWidth, WindowHeight, "Double Grit", nullptr, nullptr);
     if (window == nullptr)
     {
         std::cout << "Failed to create GLFW window" << std::endl;

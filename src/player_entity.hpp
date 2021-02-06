@@ -1,15 +1,15 @@
 #ifndef PLAYER_ENTITY_H
 #define PLAYER_ENTITY_H
 
+#include <string>
+
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "texture.hpp"
 #include "shader.hpp"
+#include "texture.hpp"
 #include "animated_model.hpp"
-
-#include <string>
 
 // Defines several possible options for player movement. Used as abstraction to stay away from window-system specific input methods
 enum PlayerDirection
@@ -39,7 +39,7 @@ class PlayerEntity
     public:
         glm::vec3 Position;
 
-        PlayerEntity(glm::vec3 position, glm::vec3 size, Shader shader, AnimatedModel model);
+        PlayerEntity(glm::vec3 position, glm::vec3 size, Texture2D texture, Shader shader, AnimatedModel model);
         ~PlayerEntity();
 
         void Move(PlayerDirection direction);
@@ -47,7 +47,7 @@ class PlayerEntity
         void Stop(PlayerAxis);
 
         void Update(GLfloat deltatime);
-        void Draw();
+        void Draw(GLfloat deltatime);
 
     private:
         glm::vec3 size;
@@ -55,6 +55,7 @@ class PlayerEntity
         GLfloat rotation;
         glm::vec3 acceleration, velocity;
         Shader shader;
+        Texture2D texture;
         AnimatedModel model;
 };
 

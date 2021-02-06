@@ -8,6 +8,7 @@
 #include <irrKlang.h>
 using namespace irrklang;
 
+#include "basic_entity.hpp"
 #include "player_entity.hpp"
 #include "resource_manager.hpp"
 #include "text_renderer.hpp"
@@ -58,6 +59,7 @@ class Game
         Camera         *freeCamera;
         glm::vec3      camPosition;
         PlayerEntity   *player;
+        BasicEntity    *basic;
         Level          *currentLevel;
 
         void initPlayer();

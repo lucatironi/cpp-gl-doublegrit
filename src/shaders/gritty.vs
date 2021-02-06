@@ -2,6 +2,8 @@
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexCoords;
+layout (location = 3) in ivec4 aBoneIDs;
+layout (location = 4) in vec4 aWeights;
 
 struct Light {
     vec3 position;
@@ -18,6 +20,11 @@ uniform vec3 lightColor;
 uniform Light lights[32];
 
 uniform bool entity;
+uniform bool animated;
+
+const int MAX_BONES = 100;
+
+uniform mat4 gBones[MAX_BONES];
 
 out vec3 VertexLight;
 out vec2 TexCoords;
@@ -39,7 +46,8 @@ void main()
     // combine
     VertexLight = ambient + lightColor * diffuse * attenuation;
 
-    for (int i = 0; i < lights.length(); i++) {
+    for (int i = 0; i < lights.length(); i++)
+    {
         if (lights[i].position.x == 0.0f)
             break;
         vec3 lightPos = lights[i].position;
@@ -50,7 +58,15 @@ void main()
 
     if (entity)
     {
-        gl_Position = projection * view * model * vec4(aPos, 1.0);
+        mat4 BoneTransform  = gBones[aBoneIDs[0]] * aWeights[0];
+             BoneTransform += gBones[aBoneIDs[1]] * aWeights[1];
+             BoneTransform += gBones[aBoneIDs[2]] * aWeights[2];
+             BoneTransform += gBones[aBoneIDs[3]] * aWeights[3];
+
+        vec4 pos = vec4(aPos, 1.0);
+        if (animated)
+            pos *= BoneTransform;
+        gl_Position = projection * view * model * pos;
     }
     else
     {
