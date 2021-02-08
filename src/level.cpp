@@ -47,9 +47,9 @@ void Level::pushQuad(GLfloat x1, GLfloat y1, GLfloat z1,
     GLfloat u = tile * tileFraction;
 
     std::vector<GLfloat> newVertices = {
-        x1, y1, z1, nx, ny, nz, u, 0.0f,
-        x2, y2, z2, nx, ny, nz, u + tileFraction, 0.0f,
         x3, y3, z3, nx, ny, nz, u, 1.0f,
+        x2, y2, z2, nx, ny, nz, u + tileFraction, 0.0f,
+        x1, y1, z1, nx, ny, nz, u, 0.0f,
         x2, y2, z2, nx, ny, nz, u + tileFraction, 0.0f,
         x3, y3, z3, nx, ny, nz, u, 1.0f,
         x4, y4, z4, nx, ny, nz, u + tileFraction, 1.0f};
@@ -78,10 +78,10 @@ void Level::pushBlock(GLfloat x, GLfloat z)
             0.0f, 1.0f, 0.0f,
             0);
     // right
-    pushQuad(x + quadSize, y, z,
-            x + quadSize, y, z + quadSize,
-            x + quadSize, 0.0f, z,
+    pushQuad(x + quadSize, y, z + quadSize,
+            x + quadSize, y, z,
             x + quadSize, 0.0f, z + quadSize,
+            x + quadSize, 0.0f, z,
             1.0f, 0.0f, 0.0f,
             randomWallTile());
     // front
@@ -99,10 +99,10 @@ void Level::pushBlock(GLfloat x, GLfloat z)
             -1.0f, 0.0f, 0.0f,
             randomWallTile());
     // back
-    pushQuad(x, y, z,
-            x + quadSize, y, z,
-            x, 0.0f, z,
+    pushQuad(x + quadSize, y, z,
+            x, y, z,
             x + quadSize, 0.0f, z,
+            x, 0.0f, z,
             0.0f, 0.0f, -1.0f,
             randomWallTile());
 }

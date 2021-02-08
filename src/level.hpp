@@ -10,7 +10,8 @@
 #include "texture.hpp"
 #include "shader.hpp"
 
-struct Light {
+struct Light
+{
     glm::vec3 position;
     glm::vec3 color;
     float attenuation;
@@ -19,7 +20,7 @@ struct Light {
 class Level
 {
     public:
-        Level(const GLchar *file, Shader shader);
+        Level(const GLchar* file, Shader shader);
         ~Level();
 
         glm::vec3 PlayerStartPosition;
@@ -39,7 +40,7 @@ class Level
         std::vector<GLfloat> vertices;
         std::vector<Light> lights;
 
-        void load(const GLchar *file);
+        void load(const GLchar* file);
         void initRenderData();
         void pushQuad(GLfloat x1, GLfloat y1, GLfloat z1,
                     GLfloat x2, GLfloat y2, GLfloat z2,
