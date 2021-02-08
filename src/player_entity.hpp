@@ -15,10 +15,14 @@
 // Defines several possible options for player movement. Used as abstraction to stay away from window-system specific input methods
 enum PlayerDirection
 {
-    FORWARD,
-    LEFT,
-    BACKWARD,
-    RIGHT
+    NORTH,
+    NW,
+    WEST,
+    SW,
+    SOUTH,
+    SE,
+    EAST,
+    NE
 };
 
 enum PlayerAxis
@@ -42,10 +46,10 @@ enum PlayerAnimations
 };
 
 const GLfloat GRAVITY = 9.8f;
-const GLfloat PLAYER_ACCELERATION = 12.0f;
+const GLfloat PLAYER_ACCELERATION = 8.0f;
 const GLfloat PLAYER_FRICTION = 10.0f;
 const GLfloat PLAYER_JUMP_VELOCITY = 4.0f;
-const GLfloat PLAYER_TURN_SPEED = 20.0f;
+const GLfloat PLAYER_TURN_VELOCITY = 20.0f;
 
 class PlayerEntity
 {
@@ -63,6 +67,7 @@ class PlayerEntity
         void Draw();
 
     private:
+        GLboolean running = false;
         glm::vec3 size;
         PlayerDirection direction;
         GLfloat rotation;

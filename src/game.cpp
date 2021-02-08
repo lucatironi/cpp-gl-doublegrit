@@ -8,6 +8,7 @@ bool pixelate = true;
 bool retro = false;
 bool freeCam = false;
 bool showStats = true;
+bool running = true;
 
 Game::Game(GLFWwindow *window, GLuint windowWidth, GLuint windowHeight, GLuint framebufferWidth, GLuint framebufferHeight)
     : State(GAME_MENU),
@@ -144,17 +145,45 @@ void Game::ProcessInput(GLfloat deltaTime)
         }
         else
         {
-            if (Keys[GLFW_KEY_W] && !Keys[GLFW_KEY_S]) // Forward
-                player->Move(FORWARD);
-            else if (Keys[GLFW_KEY_S] && !Keys[GLFW_KEY_W]) // Backward
-                player->Move(BACKWARD);
+            if (Keys[GLFW_KEY_W] && !Keys[GLFW_KEY_S])
+                if (!Keys[GLFW_KEY_A] && !Keys[GLFW_KEY_D])
+                    player->Move(NORTH, running);
+                else if (Keys[GLFW_KEY_A] && !Keys[GLFW_KEY_D])
+                    player->Move(NW, running);
+                else if (Keys[GLFW_KEY_D] && !Keys[GLFW_KEY_A])
+                    player->Move(NE, running);
+                else
+                    player->Stop(LATERAL);
+            else if (Keys[GLFW_KEY_S] && !Keys[GLFW_KEY_W])
+                if (!Keys[GLFW_KEY_A] && !Keys[GLFW_KEY_D])
+                    player->Move(SOUTH, running);
+                else if (Keys[GLFW_KEY_A] && !Keys[GLFW_KEY_D])
+                    player->Move(SW, running);
+                else if (Keys[GLFW_KEY_D] && !Keys[GLFW_KEY_A])
+                    player->Move(SE, running);
+                else
+                    player->Stop(LATERAL);
             else
                 player->Stop(LONGITUDINAL);
 
-            if (Keys[GLFW_KEY_A] && !Keys[GLFW_KEY_D]) // Left
-                player->Move(LEFT);
-            else if (Keys[GLFW_KEY_D] && !Keys[GLFW_KEY_A]) // Right
-                player->Move(RIGHT);
+            if (Keys[GLFW_KEY_A] && !Keys[GLFW_KEY_D])
+                if (!Keys[GLFW_KEY_W] && !Keys[GLFW_KEY_S])
+                    player->Move(WEST, running);
+                else if (Keys[GLFW_KEY_W] && !Keys[GLFW_KEY_S])
+                    player->Move(NW, running);
+                else if (Keys[GLFW_KEY_S] && !Keys[GLFW_KEY_W])
+                    player->Move(SW, running);
+                else
+                    player->Stop(LONGITUDINAL);
+            else if (Keys[GLFW_KEY_D] && !Keys[GLFW_KEY_A])
+                if (!Keys[GLFW_KEY_W] && !Keys[GLFW_KEY_S])
+                    player->Move(EAST, running);
+                else if (Keys[GLFW_KEY_W] && !Keys[GLFW_KEY_S])
+                    player->Move(NE, running);
+                else if (Keys[GLFW_KEY_S] && !Keys[GLFW_KEY_W])
+                    player->Move(SE, running);
+                else
+                    player->Stop(LONGITUDINAL);
             else
                 player->Stop(LATERAL);
         }
@@ -188,11 +217,11 @@ void Game::ProcessInput(GLfloat deltaTime)
             showStats = !showStats;
             KeysProcessed[GLFW_KEY_4] = GL_TRUE;
         }
-        // 5 TBD
-        if (Keys[GLFW_KEY_5] && !KeysProcessed[GLFW_KEY_5])
+        // C Toggle running
+        if (Keys[GLFW_KEY_C] && !KeysProcessed[GLFW_KEY_C])
         {
-            // TBD
-            KeysProcessed[GLFW_KEY_5] = GL_TRUE;
+            running = !running;
+            KeysProcessed[GLFW_KEY_C] = GL_TRUE;
         }
         // ESC pauses game
         if (Keys[GLFW_KEY_ESCAPE] && !KeysProcessed[GLFW_KEY_ESCAPE])
@@ -219,9 +248,7 @@ void Game::ProcessMouse(GLfloat xpos, GLfloat ypos)
     lastMouseY = ypos;
 
     if (State == GAME_ACTIVE)
-    {
         freeCamera->ProcessMouseMovement(xoffset, yoffset);
-    }
 }
 
 void Game::Update(GLfloat deltaTime)
@@ -291,7 +318,7 @@ void Game::initPlayer()
 void Game::updateCamera()
 {
     camPosition = player->Position + glm::vec3(0.0f, 2.0f, 2.0f);
-    glm::mat4 perspective = glm::perspective(glm::radians(90.0f), static_cast<GLfloat>(windowWidth) / static_cast<GLfloat>(windowHeight), 0.1f, 100.0f);
+    glm::mat4 perspective = glm::perspective(glm::radians(80.0f), static_cast<GLfloat>(windowWidth) / static_cast<GLfloat>(windowHeight), 0.1f, 100.0f);
     glm::mat4 view;
     glm::vec3 playerPos;
     glm::vec3 lightColor = glm::vec3(0.5f, 0.25f, 0.0f);

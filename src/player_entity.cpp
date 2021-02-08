@@ -3,8 +3,8 @@
 PlayerEntity::PlayerEntity(glm::vec3 position, glm::vec3 size, Shader shader, AnimatedModel model) :
     Position(position),
     size(size),
-    direction(FORWARD),
-    rotation(FORWARD * 90.0f),
+    direction(NORTH),
+    rotation(NORTH * 90.0f),
     acceleration(glm::vec3(0.0f)),
     velocity(glm::vec3(0.0f)),
     shader(shader),
@@ -16,23 +16,42 @@ PlayerEntity::~PlayerEntity()
 {
 }
 
-void PlayerEntity::Move(PlayerDirection direction, GLboolean running = false)
+void PlayerEntity::Move(PlayerDirection direction, GLboolean running)
 {
     this->direction = direction;
+    this->running = running;
+
+    GLfloat acc = running ? PLAYER_ACCELERATION * 3.0f : PLAYER_ACCELERATION;
 
     switch (direction)
     {
-    case FORWARD:
-        acceleration.z = -PLAYER_ACCELERATION;
+    case NORTH:
+        acceleration.z = -acc;
         break;
-    case BACKWARD:
-        acceleration.z = PLAYER_ACCELERATION;
+    case NW:
+        acceleration.x = -acc;
+        acceleration.z = -acc;
         break;
-    case LEFT:
-        acceleration.x = -PLAYER_ACCELERATION;
+    case WEST:
+        acceleration.x = -acc;
         break;
-    case RIGHT:
-        acceleration.x = PLAYER_ACCELERATION;
+    case SW:
+        acceleration.x = -acc;
+        acceleration.z = acc;
+        break;
+    case SOUTH:
+        acceleration.z = acc;
+        break;
+    case SE:
+        acceleration.x = acc;
+        acceleration.z = acc;
+        break;
+    case EAST:
+        acceleration.x = acc;
+        break;
+    case NE:
+        acceleration.x = acc;
+        acceleration.z = -acc;
         break;
     default:
         break;
@@ -55,9 +74,9 @@ void PlayerEntity::Stop(PlayerAxis axis)
 
 void PlayerEntity::Update(GLfloat deltaTime)
 {
-    GLfloat targetRotation = direction * 90.0f;
+    GLfloat targetRotation = direction * 45.0f;
     if ((int)rotation != targetRotation)
-        rotation += shortestAngle(rotation, targetRotation) * PLAYER_TURN_SPEED * deltaTime;
+        rotation += shortestAngle(rotation, targetRotation) * PLAYER_TURN_VELOCITY * deltaTime;
     rotation = fmod(rotation, 360.0f);
 
     velocity += acceleration * deltaTime - velocity * std::min(PLAYER_FRICTION * deltaTime, 1.0f);
@@ -68,7 +87,7 @@ void PlayerEntity::Update(GLfloat deltaTime)
     if (isNearlyEqual(acceleration.x, 0.0f) && isNearlyEqual(acceleration.z, 0.0f))
         model.SetAnimation(IDLE);
     else
-        model.SetAnimation(WALK);
+        running ? model.SetAnimation(RUN) : model.SetAnimation(WALK);
 }
 
 void PlayerEntity::Draw()
