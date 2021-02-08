@@ -1,7 +1,7 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include <glad/glad.h> // holds all OpenGL type declarations
+#include <glad/glad.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -16,16 +16,18 @@ const unsigned int NUM_BONES_PER_VERTEX = 4;
 
 struct Vertex
 {
-    glm::vec3 position;
-    glm::vec3 normal;
-    glm::vec2 texCoords;
+    glm::vec3 Position;
+    glm::vec3 Normal;
+    glm::vec2 TexCoords;
+    glm::ivec4 BoneIDs;
+    glm::vec4 BoneWeights;
 };
 
 struct Texture
 {
-    unsigned int id;
-    std::string type;
-    std::string path;
+    unsigned int ID;
+    std::string Type;
+    std::string Path;
 };
 
 class Mesh

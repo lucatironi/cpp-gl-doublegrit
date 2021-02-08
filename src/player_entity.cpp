@@ -1,13 +1,12 @@
 #include "player_entity.hpp"
 
-PlayerEntity::PlayerEntity(glm::vec3 position, glm::vec3 size, Texture2D texture, Shader shader, AnimatedModel model) :
+PlayerEntity::PlayerEntity(glm::vec3 position, glm::vec3 size, Shader shader, AnimatedModel model) :
     Position(position),
     size(size),
     direction(FORWARD),
     rotation(FORWARD * 90.0f),
     acceleration(glm::vec3(0.0f)),
     velocity(glm::vec3(0.0f)),
-    texture(texture),
     shader(shader),
     model(model)
 {
@@ -17,7 +16,7 @@ PlayerEntity::~PlayerEntity()
 {
 }
 
-void PlayerEntity::Move(PlayerDirection direction)
+void PlayerEntity::Move(PlayerDirection direction, GLboolean running = false)
 {
     this->direction = direction;
 
@@ -65,9 +64,14 @@ void PlayerEntity::Update(GLfloat deltaTime)
     velocity.y -= GRAVITY * deltaTime - velocity.y * std::min(PLAYER_FRICTION * deltaTime, 1.0f);
     Position += velocity * deltaTime;
     Position.y = glm::clamp(Position.y, 0.0f, 1.0f);
+
+    if (isNearlyEqual(acceleration.x, 0.0f) && isNearlyEqual(acceleration.z, 0.0f))
+        model.SetAnimation(IDLE);
+    else
+        model.SetAnimation(WALK);
 }
 
-void PlayerEntity::Draw(GLfloat deltaTime)
+void PlayerEntity::Draw()
 {
     // Prepare transformations
     glm::mat4 modelMat = glm::mat4(1.0f);
@@ -79,20 +83,9 @@ void PlayerEntity::Draw(GLfloat deltaTime)
     shader.SetInteger("entity", true);
     shader.SetMatrix4("model", modelMat);
 
-    glActiveTexture(GL_TEXTURE0);
-    texture.Bind();
-
     // Set model transformation
-    model.SetBoneTransformations(shader, deltaTime);
+    model.SetBoneTransformations(shader, glfwGetTime() * 25.0f);
     model.Draw(shader);
 
     shader.SetInteger("entity", false);
-}
-
-GLfloat shortestAngle(GLfloat current, GLfloat target)
-{
-    GLfloat angle = (target - current) / 360.0f;
-    angle -= floor(angle + 0.5f);
-    angle *= 360;
-    return angle;
 }

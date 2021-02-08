@@ -58,7 +58,7 @@ void Game::Init()
     currentLevel = new Level("../assets/level1.png", ResourceManager::GetShader("gritty"));
 
     // Configure Player
-    player = new PlayerEntity(currentLevel->PlayerStartPosition, glm::vec3(0.25f), ResourceManager::GetTexture("player"), ResourceManager::GetShader("gritty"), ResourceManager::LoadModel("../assets/bob_lamp/bob_lamp.md5mesh", "playerModel"));
+    player = new PlayerEntity(currentLevel->PlayerStartPosition, glm::vec3(0.0015f), ResourceManager::GetShader("gritty"), ResourceManager::LoadModel("../assets/player.fbx", "playerModel"));
     basic = new BasicEntity(currentLevel->PlayerStartPosition + glm::vec3(-1.0f, 0.5f, -1.0f), glm::vec3(0.5f), ResourceManager::GetTexture("player"), ResourceManager::GetShader("gritty"));
 
     // Configure Camera
@@ -188,6 +188,12 @@ void Game::ProcessInput(GLfloat deltaTime)
             showStats = !showStats;
             KeysProcessed[GLFW_KEY_4] = GL_TRUE;
         }
+        // 5 TBD
+        if (Keys[GLFW_KEY_5] && !KeysProcessed[GLFW_KEY_5])
+        {
+            // TBD
+            KeysProcessed[GLFW_KEY_5] = GL_TRUE;
+        }
         // ESC pauses game
         if (Keys[GLFW_KEY_ESCAPE] && !KeysProcessed[GLFW_KEY_ESCAPE])
         {
@@ -247,8 +253,7 @@ void Game::Render(GLfloat deltaTime)
             pixelator->BeginRender();
 
         currentLevel->Draw(ResourceManager::GetTexture("tiles"));
-        player->Draw(deltaTime);
-        basic->Draw();
+        player->Draw();
 
         if (pixelate)
             pixelator->EndRender();

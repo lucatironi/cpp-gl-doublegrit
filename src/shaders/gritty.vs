@@ -63,10 +63,11 @@ void main()
              BoneTransform += gBones[aBoneIDs[2]] * aWeights[2];
              BoneTransform += gBones[aBoneIDs[3]] * aWeights[3];
 
-        vec4 pos = vec4(aPos, 1.0);
+        vec4 pos = BoneTransform * vec4(aPos, 1.0);
         if (animated)
-            pos *= BoneTransform;
-        gl_Position = projection * view * model * pos;
+            gl_Position = projection * view * model * pos;
+        else
+            gl_Position = projection * view * model * vec4(aPos, 1.0);
     }
     else
     {

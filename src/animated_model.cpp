@@ -1,77 +1,23 @@
 #include "animated_model.hpp"
 
-GLenum glCheckError_(const char *file, int line)
-{
-    GLenum errorCode;
-    while ((errorCode = glGetError()) != GL_NO_ERROR)
-    {
-        std::string error;
-        switch (errorCode)
-        {
-            case GL_INVALID_ENUM:                  error = "INVALID_ENUM"; break;
-            case GL_INVALID_VALUE:                 error = "INVALID_VALUE"; break;
-            case GL_INVALID_OPERATION:             error = "INVALID_OPERATION"; break;
-            case GL_STACK_OVERFLOW:                error = "STACK_OVERFLOW"; break;
-            case GL_STACK_UNDERFLOW:               error = "STACK_UNDERFLOW"; break;
-            case GL_OUT_OF_MEMORY:                 error = "OUT_OF_MEMORY"; break;
-            case GL_INVALID_FRAMEBUFFER_OPERATION: error = "INVALID_FRAMEBUFFER_OPERATION"; break;
-        }
-        std::cout << error << " | " << file << " (" << line << ")" << std::endl;
-    }
-    return errorCode;
-}
-#define glCheckError() glCheckError_(__FILE__, __LINE__)
-
-void AnimatedModel::VertexBoneData::AddBoneData(unsigned int boneID, float weight)
-{
-    for (unsigned int i = 0 ; i < (sizeof(IDs)/sizeof(IDs[0])) ; i++)
-    {
-        if (Weights[i] == 0.0)
-        {
-            IDs[i]     = boneID;
-            Weights[i] = weight;
-            return;
-        }
-    }
-    // should never get here - more bones than we have space for
-    assert(0);
-}
-
-AnimatedModel::AnimatedModel() : currentAnimation(0)
+AnimatedModel::AnimatedModel() : animDuration(0.0), currentAnimation(0), bonesCount(0)
 {
     VAO = 0;
-    memset(buffers, 0, sizeof(buffers));
-    bonesCount = 0;
     scene = nullptr;
-}
-
-AnimatedModel::~AnimatedModel()
-{
-    clear();
 }
 
 void AnimatedModel::InitFromScene(const aiScene* scene)
 {
-    // Deletes the previous loaded mesh(if it exists)
-    clear();
     this->scene = scene;
     globalInverseTransform = mat4Convert(scene->mRootNode->mTransformation);
     globalInverseTransform = glm::inverse(globalInverseTransform);
 
-    if (scene->HasAnimations() && scene->mAnimations[0]->mTicksPerSecond != 0.0f)
-        ticksPerSecond = scene->mAnimations[0]->mTicksPerSecond;
-    else
-        ticksPerSecond = 25.0f;
-
     // Resize the mesh & texture vectors
     meshes.resize(scene->mNumMeshes);
     loadedTextures.resize(scene->mNumMaterials);
+    textures.resize(scene->mNumMaterials);
 
-    std::vector<glm::vec3> positions;
-    std::vector<glm::vec3> normals;
-    std::vector<glm::vec2> texCoords;
-    std::vector<VertexBoneData> bones;
-    std::vector<Texture> textures;
+    std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
 
     unsigned int verticesCount = 0;
@@ -89,50 +35,49 @@ void AnimatedModel::InitFromScene(const aiScene* scene)
         indicesCount += meshes[i].IndicesCount;
     }
 
-    // Reserve space in the vectors for the vertex attributes and indices
-    positions.reserve(verticesCount);
-    normals.reserve(verticesCount);
-    texCoords.reserve(verticesCount);
-    bones.resize(verticesCount);
+    // Reserve space in the vectors for the vertices and indices
+    vertices.reserve(verticesCount);
     indices.reserve(indicesCount);
 
     // Initialize the meshes in the scene one by one
     for (unsigned int i = 0; i < meshes.size(); i++)
     {
         const aiMesh* mesh = scene->mMeshes[i];
-        processMesh(i, mesh, positions, normals, texCoords, bones, indices);
+        processMesh(i, mesh, vertices, indices, textures);
     }
 
     // create buffers/arrays
     glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
     glBindVertexArray(VAO);
+    // load data into vertex buffers
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    // A great thing about structs is that their memory layout is sequential for all its items.
+    // The effect is that we can simply pass a pointer to the struct and it translates perfectly to a glm::vec3/2 array which
+    // again translates to 3/2 floats which translates to a byte array.
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
 
-    glGenBuffers(BUFFERS_COUNT, buffers);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[POSITION_BUFFER]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(positions[0]) * positions.size(), &positions[0], GL_STATIC_DRAW);
-    glEnableVertexAttribArray(POSITION_LOCATION);
-    glVertexAttribPointer(POSITION_LOCATION, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[NORMAL_BUFFER]);
-    glBufferData(GL_ARRAY_BUFFER,  sizeof(normals[0]) * normals.size(), &normals[0], GL_STATIC_DRAW);
-    glEnableVertexAttribArray(NORMAL_LOCATION);
-    glVertexAttribPointer(NORMAL_LOCATION, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[TEX_COORDS_BUFFER]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(texCoords[0]) * texCoords.size(), &texCoords[0], GL_STATIC_DRAW);
-    glEnableVertexAttribArray(TEX_COORD_LOCATION);
-    glVertexAttribPointer(TEX_COORD_LOCATION, 2, GL_FLOAT, GL_FALSE, 0, 0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[BONE_BUFFER]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(bones[0]) * bones.size(), &bones[0], GL_STATIC_DRAW);
-    glEnableVertexAttribArray(BONE_ID_LOCATION);
-    glVertexAttribIPointer(BONE_ID_LOCATION, 4, GL_INT, sizeof(VertexBoneData), (const GLvoid*)0);
-    glEnableVertexAttribArray(BONE_WEIGHT_LOCATION);
-    glVertexAttribPointer(BONE_WEIGHT_LOCATION, 4, GL_FLOAT, GL_FALSE, sizeof(VertexBoneData), (const GLvoid*)16);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[INDEX_BUFFER]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices[0]) * indices.size(), &indices[0], GL_STATIC_DRAW);
+    // set the vertex attribute pointers
+    // vertex Positions
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    // vertex normals
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+    // vertex texture coords
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+    // vertex bone ids
+    glEnableVertexAttribArray(3);
+    glVertexAttribIPointer(3, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, BoneIDs));
+    // vertex bone weights
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, BoneWeights));
 
     glBindVertexArray(0);
 }
@@ -146,8 +91,32 @@ void AnimatedModel::Draw(Shader shader)
 
     for (unsigned int i = 0 ; i < meshes.size() ; i++)
     {
-        // glActiveTexture(GL_TEXTURE0);
-        // glBindTexture(GL_TEXTURE_2D, 129);
+        // bind appropriate textures
+        unsigned int diffuseNr  = 1;
+        unsigned int specularNr = 1;
+        unsigned int normalNr   = 1;
+        unsigned int emissionNr = 1;
+        
+        for (unsigned int i = 0; i < textures.size(); i++)
+        {
+            glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
+            // retrieve texture number (the N in diffuse_textureN)
+            std::string number;
+            std::string name = textures[i].Type;
+            if(name == "texture_diffuse")
+                number = std::to_string(diffuseNr++); // transfer unsigned int to stream
+            else if(name == "texture_specular")
+                number = std::to_string(specularNr++);
+            else if (name == "texture_normal")
+                number = std::to_string(normalNr++);
+            else if (name == "texture_emission")
+                number = std::to_string(emissionNr++);
+
+            // now set the sampler to the correct texture unit
+            glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
+            // and finally bind the texture
+            glBindTexture(GL_TEXTURE_2D, textures[i].ID);
+        }
 
         glDrawElementsBaseVertex(GL_TRIANGLES,
                                  meshes[i].IndicesCount,
@@ -163,12 +132,12 @@ void AnimatedModel::Draw(Shader shader)
         shader.SetInteger("animated", 0);
 }
 
-void AnimatedModel::SetBoneTransformations(Shader shader, GLfloat deltaTime)
+void AnimatedModel::SetBoneTransformations(Shader shader, GLfloat currentTime)
 {
     if (HasAnimations())
     {
         std::vector<glm::mat4> transforms;
-        BoneTransform((float)deltaTime, transforms);
+        boneTransform((float)currentTime, transforms);
         shader.SetMatrix4v("gBones", transforms);
     }
 }
@@ -179,7 +148,133 @@ void AnimatedModel::SetAnimation(unsigned int animation)
         currentAnimation = animation;
 }
 
-void AnimatedModel::BoneTransform(float deltaTime, std::vector<glm::mat4>& transforms)
+void AnimatedModel::processMesh(unsigned int meshIndex,
+                                const aiMesh* mesh,
+                                std::vector<Vertex>& vertices,
+                                std::vector<unsigned int>& indices,
+                                std::vector<Texture>& textures)
+{
+    // Walk through each of the mesh's vertices
+    for (unsigned int i = 0; i < mesh->mNumVertices; i++)
+    {
+        Vertex vertex;
+        glm::vec3 vector; // we declare a placeholder vector since assimp uses its own vector class that doesn't directly convert to glm's vec3 class so we transfer the data to this placeholder glm::vec3 first.
+        // positions
+        vector.x = mesh->mVertices[i].x;
+        vector.y = mesh->mVertices[i].y;
+        vector.z = mesh->mVertices[i].z;
+        vertex.Position = vector;
+        // normals
+        if (mesh->HasNormals())
+        {
+            vector.x = mesh->mNormals[i].x;
+            vector.y = mesh->mNormals[i].y;
+            vector.z = mesh->mNormals[i].z;
+            vertex.Normal = vector;
+        }
+        // texture coordinates
+        if (mesh->HasTextureCoords(0)) // does the mesh contain texture coordinates?
+        {
+            glm::vec2 vec;
+            // a vertex can contain up to 8 different texture coordinates. We thus make the assumption that we won't
+            // use models where a vertex can have multiple texture coordinates so we always take the first set (0).
+            vec.x = mesh->mTextureCoords[0][i].x;
+            vec.y = mesh->mTextureCoords[0][i].y;
+            vertex.TexCoords = vec;
+        }
+        else
+            vertex.TexCoords = glm::vec2(0.0f, 0.0f);
+
+        // Bone Weights are initialised in next for loop
+        vertex.BoneWeights = glm::vec4(0.0f);
+
+        vertices.push_back(vertex);
+    }
+
+        // process bones
+    for (unsigned int i = 0; i < mesh->mNumBones; i++)
+    {
+        unsigned int boneIndex = 0;
+        std::string boneName(mesh->mBones[i]->mName.data);
+
+        if (boneMapping.find(boneName) == boneMapping.end())
+        {
+            // allocate an index for the new bone
+            boneIndex = bonesCount;
+            bonesCount++;
+            BoneMatrix boneMatrix;
+            boneMatrices.push_back(boneMatrix);
+
+            boneMatrices[boneIndex].BoneOffset = mat4Convert(mesh->mBones[i]->mOffsetMatrix);
+            boneMapping[boneName] = boneIndex;
+        }
+        else
+            boneIndex = boneMapping[boneName];
+
+        for (unsigned int j = 0; j < mesh->mBones[i]->mNumWeights; j++)
+        {
+            unsigned int vertexID = meshes[meshIndex].BaseVertex + mesh->mBones[i]->mWeights[j].mVertexId;
+            float boneWeight = mesh->mBones[i]->mWeights[j].mWeight;
+
+            for (unsigned int g = 0; g < NUM_BONES_PER_VERTEX; g++)
+            {
+                if (vertices[vertexID].BoneWeights[g] == 0.0)
+                {
+                    vertices[vertexID].BoneIDs[g] = boneIndex;
+                    vertices[vertexID].BoneWeights[g] = boneWeight;
+                    break;
+                }
+            }
+        }
+    }
+
+    // now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
+    for (unsigned int i = 0; i < mesh->mNumFaces; i++)
+    {
+        const aiFace face = mesh->mFaces[i];
+        assert(face.mNumIndices == 3);
+        // retrieve all indices of the face and store them in the indices vector
+        for (unsigned int j = 0; j < face.mNumIndices; j++)
+            indices.push_back(face.mIndices[j]);
+    }
+
+    // process materials
+    aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+    // we assume a convention for sampler names in the shaders. Each diffuse texture should be named
+    // as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER.
+    // Same applies to other texture as the following list summarizes:
+    // diffuse: texture_diffuseN
+    // specular: texture_specularN
+    // normal: texture_normalN
+    // emission: texture_emissionN
+
+    // 1. diffuse maps
+    if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
+    {
+        std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+        textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+    }
+    // 2. specular maps
+    if (material->GetTextureCount(aiTextureType_SPECULAR) > 0)
+    {
+        std::vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
+        textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+    }
+    // 3. normal maps
+    if (material->GetTextureCount(aiTextureType_HEIGHT) > 0)
+    {
+        std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
+        textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+    }
+    // 4. emission maps
+    if (material->GetTextureCount(aiTextureType_EMISSIVE) > 0)
+    {
+        std::vector<Texture> emissionMaps = loadMaterialTextures(material, aiTextureType_EMISSIVE, "texture_emission");
+        textures.insert(textures.end(), emissionMaps.begin(), emissionMaps.end());
+    }
+}
+
+void AnimatedModel::boneTransform(float timeInSeconds, std::vector<glm::mat4>& transforms)
 {
     glm::mat4 identity = glm::mat4(1.0f);
 
@@ -188,7 +283,7 @@ void AnimatedModel::BoneTransform(float deltaTime, std::vector<glm::mat4>& trans
     animDuration = scene->mAnimations[currentAnimation]->mChannels[0]->mPositionKeys[numPosKeys - 1].mTime;
 
     float ticksPerSecond = (float)(scene->mAnimations[currentAnimation]->mTicksPerSecond != 0 ? scene->mAnimations[currentAnimation]->mTicksPerSecond : 25.0f);
-    float timeInTicks = deltaTime * ticksPerSecond;
+    float timeInTicks = timeInSeconds * ticksPerSecond;
     float animationTime = fmod(timeInTicks, animDuration);
     readNodeHeirarchy(animationTime, scene->mRootNode, identity);
     transforms.resize(bonesCount);
@@ -305,7 +400,7 @@ void AnimatedModel::readNodeHeirarchy(float animationTime, const aiNode* node, c
 {
     std::string nodeName(node->mName.data);
 
-    const aiAnimation* animation = scene->mAnimations[0];
+    const aiAnimation* animation = scene->mAnimations[currentAnimation];
 
     glm::mat4 nodeTransformation = mat4Convert(node->mTransformation);
 
@@ -360,128 +455,6 @@ const aiNodeAnim* AnimatedModel::findNodeAnim(const aiAnimation* animation, cons
     return NULL;
 }
 
-void AnimatedModel::processMesh(unsigned int meshIndex,
-                                const aiMesh* mesh,
-                                std::vector<glm::vec3>& positions,
-                                std::vector<glm::vec3>& normals,
-                                std::vector<glm::vec2>& texCoords,
-                                std::vector<VertexBoneData>& bones,
-                                std::vector<unsigned int>& indices)
-{
-    // Walk through each of the mesh's vertices
-    for (unsigned int i = 0; i < mesh->mNumVertices; i++)
-    {
-        glm::vec3 vector; // we declare a placeholder vector since assimp uses its own vector class that doesn't directly convert to glm's vec3 class so we transfer the data to this placeholder glm::vec3 first.
-        // positions
-        vector.x = mesh->mVertices[i].x;
-        vector.y = mesh->mVertices[i].y;
-        vector.z = mesh->mVertices[i].z;
-        positions.push_back(vector);
-        // normals
-        if (mesh->HasNormals())
-        {
-            vector.x = mesh->mNormals[i].x;
-            vector.y = mesh->mNormals[i].y;
-            vector.z = mesh->mNormals[i].z;
-            normals.push_back(vector);
-        }
-        // texture coordinates
-        if (mesh->HasTextureCoords(0)) // does the mesh contain texture coordinates?
-        {
-            glm::vec2 vec;
-            // a vertex can contain up to 8 different texture coordinates. We thus make the assumption that we won't
-            // use models where a vertex can have multiple texture coordinates so we always take the first set (0).
-            vec.x = mesh->mTextureCoords[0][i].x;
-            vec.y = mesh->mTextureCoords[0][i].y;
-            texCoords.push_back(vec);
-        }
-        else
-            texCoords.push_back(glm::vec2(0.0f, 0.0f));
-    }
-
-    loadBones(meshIndex, mesh, bones);
-
-    // now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
-    for (unsigned int i = 0; i < mesh->mNumFaces; i++)
-    {
-        const aiFace face = mesh->mFaces[i];
-        assert(face.mNumIndices == 3);
-        // retrieve all indices of the face and store them in the indices vector
-        for (unsigned int j = 0; j < face.mNumIndices; j++)
-            indices.push_back(face.mIndices[j]);
-    }
-}
-
-void AnimatedModel::loadBones(unsigned int meshIndex, const aiMesh* mesh, std::vector<VertexBoneData>& bones)
-{
-    for (unsigned int i = 0; i < mesh->mNumBones; i++)
-    {
-        unsigned int boneIndex = 0;
-        std::string boneName(mesh->mBones[i]->mName.data);
-
-        if (boneMapping.find(boneName) == boneMapping.end())
-        {
-            // allocate an index for the new bone
-            boneIndex = bonesCount;
-            bonesCount++;
-            BoneMatrix boneMatrix;
-            boneMatrices.push_back(boneMatrix);
-
-            boneMatrices[boneIndex].BoneOffset = mat4Convert(mesh->mBones[i]->mOffsetMatrix);
-            boneMapping[boneName] = boneIndex;
-        }
-        else
-            boneIndex = boneMapping[boneName];
-
-        for (unsigned int j = 0; j < mesh->mBones[i]->mNumWeights; j++)
-        {
-            unsigned int vertexID = meshes[meshIndex].BaseVertex + mesh->mBones[i]->mWeights[j].mVertexId;
-            float weight = mesh->mBones[i]->mWeights[j].mWeight;
-            bones[vertexID].AddBoneData(boneIndex, weight);
-        }
-    }
-}
-
-void AnimatedModel::loadMaterials(const aiScene* scene, std::vector<Texture>& textures)
-{
-    // we assume a convention for sampler names in the shaders. Each diffuse texture should be named
-    // as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER.
-    // Same applies to other texture as the following list summarizes:
-    // diffuse: texture_diffuseN
-    // specular: texture_specularN
-    // normal: texture_normalN
-    // emission: texture_emissionN
-    for (unsigned int i = 0; i < scene->mNumMaterials; i++)
-    {
-        aiMaterial* material = scene->mMaterials[i];
-
-        // 1. diffuse maps
-        if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
-        {
-            std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-            textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-        }
-        // 2. specular maps
-        if (material->GetTextureCount(aiTextureType_SPECULAR) > 0)
-        {
-            std::vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-            textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-        }
-        // 3. normal maps
-        if (material->GetTextureCount(aiTextureType_HEIGHT) > 0)
-        {
-            std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-            textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-        }
-        // 4. emission maps
-        if (material->GetTextureCount(aiTextureType_EMISSIVE) > 0)
-        {
-            std::vector<Texture> emissionMaps = loadMaterialTextures(material, aiTextureType_EMISSIVE, "texture_emission");
-            textures.insert(textures.end(), emissionMaps.begin(), emissionMaps.end());
-        }
-    }
-}
-
 // checks all material textures of a given type and loads the textures if they're not loaded yet.
 // the required info is returned as a Texture struct.
 std::vector<AnimatedModel::Texture> AnimatedModel::loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)
@@ -515,16 +488,16 @@ std::vector<AnimatedModel::Texture> AnimatedModel::loadMaterialTextures(aiMateri
     return textures;
 }
 
-unsigned int AnimatedModel::textureFromFile(const char* path, const std::string& directory, bool /* gamma */)
+unsigned int AnimatedModel::textureFromFile(const char* filename, const std::string& directory, bool /* gamma */)
 {
-    std::string filename = std::string(path);
-    filename = directory + '/' + filename;
+    std::string path = std::string(filename);
+    path = directory + '/' + path;
 
     unsigned int textureID;
     glGenTextures(1, &textureID);
 
     int width, height, nrComponents;
-    unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
+    unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrComponents, 0);
     if (data)
     {
         GLenum format;
@@ -545,33 +518,14 @@ unsigned int AnimatedModel::textureFromFile(const char* path, const std::string&
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        stbi_image_free(data);
     }
     else
+    {
         std::cout << "Texture failed to load at path: " << path << std::endl;
-
-    stbi_image_free(data);
+        stbi_image_free(data);
+    }
 
     return textureID;
-}
-
-void AnimatedModel::clear()
-{
-    // for (unsigned int i = 0 ; i < loadedTextures.size() ; i++)
-    // {
-    //     if (loadedTextures[i])
-    //     {
-    //         delete loadedTextures[i];
-    //         loadedTextures[i] = nullptr;
-    //     }
-    // }
-    scene = nullptr;
-
-    if (buffers[0] != 0)
-        glDeleteBuffers((sizeof(buffers)/sizeof(buffers[0])), buffers);
-
-    if (VAO != 0)
-    {
-        glDeleteVertexArrays(1, &VAO);
-        VAO = 0;
-    }
 }

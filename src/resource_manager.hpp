@@ -9,6 +9,10 @@
 
 #include <glad/glad.h>
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 #include "texture.hpp"
 #include "shader.hpp"
 #include "animated_model.hpp"

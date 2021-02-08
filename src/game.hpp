@@ -8,6 +8,7 @@
 #include <irrKlang.h>
 using namespace irrklang;
 
+#include "utils.hpp"
 #include "basic_entity.hpp"
 #include "player_entity.hpp"
 #include "resource_manager.hpp"
