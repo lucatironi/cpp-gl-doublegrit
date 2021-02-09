@@ -10,19 +10,20 @@
 
 #include "utils.hpp"
 #include "shader.hpp"
+#include "texture.hpp"
 #include "animated_model.hpp"
 
 // Defines several possible options for player movement. Used as abstraction to stay away from window-system specific input methods
 enum PlayerDirection
 {
-    NORTH,
-    NW,
-    WEST,
-    SW,
     SOUTH,
     SE,
     EAST,
-    NE
+    NE,
+    NORTH,
+    NW,
+    WEST,
+    SW
 };
 
 enum PlayerAxis
@@ -47,16 +48,16 @@ enum PlayerAnimations
 
 const GLfloat GRAVITY = 9.8f;
 const GLfloat PLAYER_ACCELERATION = 8.0f;
-const GLfloat PLAYER_FRICTION = 10.0f;
+const GLfloat PLAYER_FRICTION = 12.0f;
 const GLfloat PLAYER_JUMP_VELOCITY = 4.0f;
-const GLfloat PLAYER_TURN_VELOCITY = 20.0f;
+const GLfloat PLAYER_TURN_VELOCITY = 5.0f;
 
 class PlayerEntity
 {
     public:
         glm::vec3 Position;
 
-        PlayerEntity(glm::vec3 position, glm::vec3 size, Shader shader, AnimatedModel model);
+        PlayerEntity(glm::vec3 position, glm::vec3 size, Texture2D texture, Shader shader, AnimatedModel model);
         ~PlayerEntity();
 
         void Move(PlayerDirection direction, GLboolean running = false);
@@ -69,10 +70,11 @@ class PlayerEntity
     private:
         GLboolean running = false;
         glm::vec3 size;
-        PlayerDirection direction;
         GLfloat rotation;
+        PlayerDirection direction;
         glm::vec3 acceleration, velocity;
         Shader shader;
+        Texture2D texture;
         AnimatedModel model;
 };
 

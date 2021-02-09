@@ -1,12 +1,13 @@
 #include "player_entity.hpp"
 
-PlayerEntity::PlayerEntity(glm::vec3 position, glm::vec3 size, Shader shader, AnimatedModel model) :
+PlayerEntity::PlayerEntity(glm::vec3 position, glm::vec3 size, Texture2D texture, Shader shader, AnimatedModel model) :
     Position(position),
     size(size),
     direction(NORTH),
-    rotation(NORTH * 90.0f),
+    rotation(NORTH * 45.0f),
     acceleration(glm::vec3(0.0f)),
     velocity(glm::vec3(0.0f)),
+    texture(texture),
     shader(shader),
     model(model)
 {
@@ -101,6 +102,9 @@ void PlayerEntity::Draw()
     shader.Use();
     shader.SetInteger("entity", true);
     shader.SetMatrix4("model", modelMat);
+
+    glActiveTexture(GL_TEXTURE0);
+    texture.Bind();
 
     // Set model transformation
     model.SetBoneTransformations(shader, glfwGetTime() * 25.0f);

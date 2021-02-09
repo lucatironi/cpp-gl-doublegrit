@@ -32,7 +32,7 @@ out vec2 TexCoords;
 void main()
 {
     // ambient
-    vec3 ambient = vec3(0.3, 0.3, 0.6);
+    vec3 ambient = vec3(0.4, 0.3, 0.3);
 
     // diffuse
     vec3 norm = normalize(aNormal);

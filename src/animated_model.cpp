@@ -15,7 +15,6 @@ void AnimatedModel::InitFromScene(const aiScene* scene)
     // Resize the mesh & texture vectors
     meshes.resize(scene->mNumMeshes);
     loadedTextures.resize(scene->mNumMaterials);
-    textures.resize(scene->mNumMaterials);
 
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
@@ -96,7 +95,7 @@ void AnimatedModel::Draw(Shader shader)
         unsigned int specularNr = 1;
         unsigned int normalNr   = 1;
         unsigned int emissionNr = 1;
-        
+
         for (unsigned int i = 0; i < textures.size(); i++)
         {
             glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
@@ -249,29 +248,17 @@ void AnimatedModel::processMesh(unsigned int meshIndex,
     // emission: texture_emissionN
 
     // 1. diffuse maps
-    if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
-    {
-        std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-        textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-    }
+    std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+    textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
     // 2. specular maps
-    if (material->GetTextureCount(aiTextureType_SPECULAR) > 0)
-    {
-        std::vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-        textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-    }
+    std::vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
+    textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
     // 3. normal maps
-    if (material->GetTextureCount(aiTextureType_HEIGHT) > 0)
-    {
-        std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-        textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-    }
+    std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
+    textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
     // 4. emission maps
-    if (material->GetTextureCount(aiTextureType_EMISSIVE) > 0)
-    {
-        std::vector<Texture> emissionMaps = loadMaterialTextures(material, aiTextureType_EMISSIVE, "texture_emission");
-        textures.insert(textures.end(), emissionMaps.begin(), emissionMaps.end());
-    }
+    std::vector<Texture> emissionMaps = loadMaterialTextures(material, aiTextureType_EMISSIVE, "texture_emission");
+    textures.insert(textures.end(), emissionMaps.begin(), emissionMaps.end());
 }
 
 void AnimatedModel::boneTransform(float timeInSeconds, std::vector<glm::mat4>& transforms)
@@ -459,7 +446,7 @@ const aiNodeAnim* AnimatedModel::findNodeAnim(const aiAnimation* animation, cons
 // the required info is returned as a Texture struct.
 std::vector<AnimatedModel::Texture> AnimatedModel::loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)
 {
-    std::vector<Texture> textures;
+    std::vector<Texture> texs;
     for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
     {
         aiString str;
@@ -470,7 +457,7 @@ std::vector<AnimatedModel::Texture> AnimatedModel::loadMaterialTextures(aiMateri
         {
             if (strcmp(loadedTextures[j].Path.data(), str.C_Str()) == 0)
             {
-                textures.push_back(loadedTextures[j]);
+                texs.push_back(loadedTextures[j]);
                 skip = true; // a texture with the same filepath has already been loaded, continue to next one. (optimization)
                 break;
             }
@@ -481,11 +468,11 @@ std::vector<AnimatedModel::Texture> AnimatedModel::loadMaterialTextures(aiMateri
             texture.ID = textureFromFile(str.C_Str(), this->directory);
             texture.Type = typeName;
             texture.Path = str.C_Str();
-            textures.push_back(texture);
+            texs.push_back(texture);
             loadedTextures.push_back(texture); // store it as texture loaded for entire model, to ensure we won't unnecesery load duplicate textures.
         }
     }
-    return textures;
+    return texs;
 }
 
 unsigned int AnimatedModel::textureFromFile(const char* filename, const std::string& directory, bool /* gamma */)

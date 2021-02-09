@@ -8,8 +8,6 @@
 #include "texture.hpp"
 #include "shader.hpp"
 
-#include <string>
-
 class BasicEntity
 {
     public:

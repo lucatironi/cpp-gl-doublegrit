@@ -11,6 +11,7 @@ using namespace irrklang;
 #include "utils.hpp"
 #include "basic_entity.hpp"
 #include "player_entity.hpp"
+#include "shadow.hpp"
 #include "resource_manager.hpp"
 #include "text_renderer.hpp"
 #include "pixelator.hpp"
@@ -60,7 +61,7 @@ class Game
         Camera         *freeCamera;
         glm::vec3      camPosition;
         PlayerEntity   *player;
-        BasicEntity    *basic;
+        Shadow         *shadow;
         Level          *currentLevel;
 
         void initPlayer();

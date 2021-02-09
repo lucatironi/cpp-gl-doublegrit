@@ -122,7 +122,7 @@ AnimatedModel ResourceManager::loadModelFromFilename(const std::string &path)
     AnimatedModel model;
     // read file via ASSIMP
     Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_MakeLeftHanded | aiProcess_LimitBoneWeights | aiProcess_GenNormals);
+    const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_LimitBoneWeights | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices);
     // check for errors
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {

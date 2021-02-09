@@ -27,7 +27,7 @@ Game::Game(GLFWwindow *window, GLuint windowWidth, GLuint windowHeight, GLuint f
 
 Game::~Game()
 {
-    delete basic;
+    delete shadow;
     delete player;
     delete textRenderer;
     delete pixelator;
@@ -52,15 +52,17 @@ void Game::Init()
     // Set render-specific controls
     pixelator = new Pixelator(windowWidth, windowHeight, framebufferWidth, framebufferHeight);
     // Load Tilemap Texture
-    ResourceManager::LoadTexture("../assets/tiles.png", GL_TRUE, "tiles", GL_CLAMP_TO_EDGE, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST);
-    ResourceManager::LoadTexture("../assets/player.png", GL_FALSE, "player", GL_CLAMP_TO_EDGE, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST);
+    ResourceManager::LoadTexture("../assets/tiles.png", GL_TRUE, "tiles", GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST);
+    ResourceManager::LoadTexture("../assets/player.png", GL_FALSE, "player", GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST);
+    ResourceManager::LoadTexture("../assets/test.png", GL_FALSE, "test", GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST);
+    ResourceManager::LoadTexture("../assets/shadow.png", GL_TRUE, "shadow", GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST);
 
     // Initalize Level
     currentLevel = new Level("../assets/level1.png", ResourceManager::GetShader("gritty"));
 
     // Configure Player
-    player = new PlayerEntity(currentLevel->PlayerStartPosition, glm::vec3(0.0015f), ResourceManager::GetShader("gritty"), ResourceManager::LoadModel("../assets/player.fbx", "playerModel"));
-    basic = new BasicEntity(currentLevel->PlayerStartPosition + glm::vec3(-1.0f, 0.5f, -1.0f), glm::vec3(0.5f), ResourceManager::GetTexture("player"), ResourceManager::GetShader("gritty"));
+    player = new PlayerEntity(currentLevel->PlayerStartPosition, glm::vec3(0.0015f), ResourceManager::GetTexture("player"), ResourceManager::GetShader("gritty"), ResourceManager::LoadModel("../assets/player.fbx", "playerModel"));
+    shadow = new Shadow(currentLevel->PlayerStartPosition, glm::vec3(0.5f), ResourceManager::GetTexture("shadow"), ResourceManager::GetShader("gritty"));
 
     // Configure Camera
     freeCamera = new Camera();
@@ -263,6 +265,7 @@ void Game::Update(GLfloat deltaTime)
             player->Position.x = playerLastPosition.x;
             player->Position.z = playerLastPosition.z;
         }
+        shadow->Position = player->Position;
     }
 }
 
@@ -280,6 +283,7 @@ void Game::Render(GLfloat deltaTime)
             pixelator->BeginRender();
 
         currentLevel->Draw(ResourceManager::GetTexture("tiles"));
+        shadow->Draw();
         player->Draw();
 
         if (pixelate)
