@@ -26,42 +26,14 @@ uniform vec3 lightColor;
 uniform Light lights[MAX_LIGHTS];
 uniform mat4 gBones[MAX_BONES];
 
-out vec3 FragPos;
 out vec3 VertexLight;
 out vec2 TexCoords;
 
+vec3 CalcPointLight(vec3 lightPos, vec3 vertexPos, vec3 lightColor);
+
 void main()
 {
-    // ambient
-    vec3 ambient = vec3(0.0);
-
-    // diffuse
-    vec3 normal = normalize(aNormal);
-    vec3 lightDir = normalize(playerLightPos - aPos);
-    float diffuse = max(dot(aNormal, lightDir), 0.0);
-
-    // attenuation
-    float constantAtt = 0.2;
-    float linearAtt = 0.09;
-    float quadraticAtt = 0.032;
-    float distance = length(playerLightPos - aPos);
-    float attenuation = 1.0 / (constantAtt + linearAtt * distance + quadraticAtt * (distance * distance));
-
-    // combine
-    VertexLight = ambient + (lightColor * attenuation) + (diffuse * attenuation);
-
-    // for (int i = 0; i < lights.length(); i++)
-    // {
-    //     if (lights[i].position.x == 0.0f)
-    //         break;
-    //     vec3 lightPos = lights[i].position;
-    //     VertexLight += lights[i].color * 
-    //                    max(dot(aNormal, normalize(lightPos - aPos)), 0.0) * 
-    //                    (1.0 / (lights[i].attenuation * length(lightPos - aPos)));
-    // }
-
-    TexCoords = aTexCoords;
-
+    vec4 worldPos;
     if (entity)
     {
         mat4 BoneTransform  = gBones[aBoneIDs[0]] * aWeights[0];
@@ -70,13 +42,43 @@ void main()
              BoneTransform += gBones[aBoneIDs[3]] * aWeights[3];
 
         vec4 pos = BoneTransform * vec4(aPos, 1.0);
+
         if (animated)
-            gl_Position = projection * view * model * pos;
+            worldPos = model * pos;
         else
-            gl_Position = projection * view * model * vec4(aPos, 1.0);
+            worldPos = model * vec4(aPos, 1.0);
     }
     else
     {
-        gl_Position = projection * view * vec4(aPos, 1.0);
+        worldPos = vec4(aPos, 1.0);
     }
+    gl_Position = projection * view * worldPos;
+
+    // ambient
+    vec3 ambient = vec3(0.0001);
+
+    VertexLight = ambient + CalcPointLight(playerLightPos, worldPos.xyz, lightColor);
+
+    for (int i = 0; i < lights.length(); i++)
+    {
+        VertexLight += CalcPointLight(lights[i].position, worldPos.xyz, lights[i].color);
+    }
+
+    TexCoords = aTexCoords;
+}
+
+
+vec3 CalcPointLight(vec3 lightPos, vec3 vertexPos, vec3 lightColor)
+{
+    // attenuation
+    float constantAtt = 0.0;
+    float linearAtt = 0.7;
+    float quadraticAtt = 0.3;
+
+    vec3 normal = normalize(aNormal);
+    vec3 lightDir = normalize(lightPos - vertexPos);
+    float diffuse = max(dot(normal, lightDir), 0.0);
+    float distance = length(lightPos -  vertexPos);
+    float attenuation = 1.0 / (constantAtt + linearAtt * distance + quadraticAtt * (distance * distance));
+    return (lightColor * attenuation) + (diffuse * attenuation);
 }

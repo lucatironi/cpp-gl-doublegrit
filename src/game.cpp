@@ -279,7 +279,7 @@ void Game::Update(GLfloat deltaTime)
             player->Position.z = playerLastPosition.z;
         }
         light->Position = player->Position + glm::vec3(0.0f, 1.0f, 0.0f);
-        shadow->Position = player->Position;
+        shadow->Position = glm::vec3(player->Position.x, 0.0f, player->Position.z);
     }
 }
 
