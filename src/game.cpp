@@ -8,6 +8,7 @@ bool pixelate = true;
 bool retro = false;
 bool freeCam = false;
 bool showStats = true;
+bool debugViz = false;
 bool running = true;
 
 Game::Game(GLFWwindow *window, GLuint windowWidth, GLuint windowHeight, GLuint framebufferWidth, GLuint framebufferHeight)
@@ -28,6 +29,7 @@ Game::Game(GLFWwindow *window, GLuint windowWidth, GLuint windowHeight, GLuint f
 Game::~Game()
 {
     delete shadow;
+    delete light;
     delete player;
     delete textRenderer;
     delete pixelator;
@@ -41,6 +43,13 @@ void Game::Init()
     // Load shaders
     ResourceManager::LoadShader("../src/shaders/gritty.vs", "../src/shaders/gritty.fs", nullptr, "gritty");
     ResourceManager::LoadShader("../src/shaders/text.vs", "../src/shaders/text.fs", nullptr, "text");
+    ResourceManager::LoadShader("../src/shaders/normalizer.vs", "../src/shaders/normalizer.fs", "../src/shaders/normalizer.gs", "normalizer");
+
+    // Load Textures
+    ResourceManager::LoadTexture("../assets/tiles.png", GL_TRUE, "tiles", GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST);
+    ResourceManager::LoadTexture("../assets/player.png", GL_FALSE, "player", GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST);
+    ResourceManager::LoadTexture("../assets/test.png", GL_FALSE, "test", GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST);
+    ResourceManager::LoadTexture("../assets/shadow.png", GL_TRUE, "shadow", GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST);
 
     // Configure Text Renderer
     glm::mat4 ortho = glm::ortho(0.0f, static_cast<GLfloat>(windowWidth), static_cast<GLfloat>(windowHeight), 0.0f, -1.0f, 1.0f);
@@ -51,18 +60,14 @@ void Game::Init()
 
     // Set render-specific controls
     pixelator = new Pixelator(windowWidth, windowHeight, framebufferWidth, framebufferHeight);
-    // Load Tilemap Texture
-    ResourceManager::LoadTexture("../assets/tiles.png", GL_TRUE, "tiles", GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST);
-    ResourceManager::LoadTexture("../assets/player.png", GL_FALSE, "player", GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST);
-    ResourceManager::LoadTexture("../assets/test.png", GL_FALSE, "test", GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST);
-    ResourceManager::LoadTexture("../assets/shadow.png", GL_TRUE, "shadow", GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST);
 
     // Initalize Level
-    currentLevel = new Level("../assets/level1.png", ResourceManager::GetShader("gritty"));
+    currentLevel = new Level("../assets/level1.png", ResourceManager::GetTexture("tiles"));
 
     // Configure Player
-    player = new PlayerEntity(currentLevel->PlayerStartPosition, glm::vec3(0.0015f), ResourceManager::GetTexture("player"), ResourceManager::GetShader("gritty"), ResourceManager::LoadModel("../assets/player.fbx", "playerModel"));
-    shadow = new Shadow(currentLevel->PlayerStartPosition, glm::vec3(0.5f), ResourceManager::GetTexture("shadow"), ResourceManager::GetShader("gritty"));
+    player = new PlayerEntity(currentLevel->PlayerStartPosition, glm::vec3(0.0015f), ResourceManager::GetTexture("player"), ResourceManager::LoadModel("../assets/player.fbx", "playerModel"));
+    light = new BasicEntity(currentLevel->PlayerStartPosition + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.05f), ResourceManager::GetTexture("test"));
+    shadow = new Shadow(currentLevel->PlayerStartPosition, glm::vec3(0.5f), ResourceManager::GetTexture("shadow"));
 
     // Configure Camera
     freeCamera = new Camera();
@@ -190,11 +195,25 @@ void Game::ProcessInput(GLfloat deltaTime)
                 player->Stop(LATERAL);
         }
 
+        // SPACE jump
         if (Keys[GLFW_KEY_SPACE] && !KeysProcessed[GLFW_KEY_SPACE])
         {
             player->Jump();
             KeysProcessed[GLFW_KEY_SPACE] = GL_TRUE;
         }
+        // C Toggle running
+        if (Keys[GLFW_KEY_C] && !KeysProcessed[GLFW_KEY_C])
+        {
+            running = !running;
+            KeysProcessed[GLFW_KEY_C] = GL_TRUE;
+        }
+        // ESC pauses game
+        if (Keys[GLFW_KEY_ESCAPE] && !KeysProcessed[GLFW_KEY_ESCAPE])
+        {
+            State = GAME_PAUSED;
+            KeysProcessed[GLFW_KEY_ESCAPE] = GL_TRUE;
+        }
+
         // 1 Toggle Pixelate
         if (Keys[GLFW_KEY_1] && !KeysProcessed[GLFW_KEY_1])
         {
@@ -219,17 +238,11 @@ void Game::ProcessInput(GLfloat deltaTime)
             showStats = !showStats;
             KeysProcessed[GLFW_KEY_4] = GL_TRUE;
         }
-        // C Toggle running
-        if (Keys[GLFW_KEY_C] && !KeysProcessed[GLFW_KEY_C])
+        // 5 Toggle stats
+        if (Keys[GLFW_KEY_5] && !KeysProcessed[GLFW_KEY_5])
         {
-            running = !running;
-            KeysProcessed[GLFW_KEY_C] = GL_TRUE;
-        }
-        // ESC pauses game
-        if (Keys[GLFW_KEY_ESCAPE] && !KeysProcessed[GLFW_KEY_ESCAPE])
-        {
-            State = GAME_PAUSED;
-            KeysProcessed[GLFW_KEY_ESCAPE] = GL_TRUE;
+            debugViz = !debugViz;
+            KeysProcessed[GLFW_KEY_5] = GL_TRUE;
         }
     }
 }
@@ -265,6 +278,7 @@ void Game::Update(GLfloat deltaTime)
             player->Position.x = playerLastPosition.x;
             player->Position.z = playerLastPosition.z;
         }
+        light->Position = player->Position + glm::vec3(0.0f, 1.0f, 0.0f);
         shadow->Position = player->Position;
     }
 }
@@ -274,21 +288,32 @@ void Game::Render(GLfloat deltaTime)
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    if (pixelate)
+        pixelator->BeginRender();
+
     if (State == GAME_ACTIVE ||
         State == GAME_PAUSED ||
         State == GAME_MENU ||
         State == GAME_WIN)
     {
-        if (pixelate)
-            pixelator->BeginRender();
 
-        currentLevel->Draw(ResourceManager::GetTexture("tiles"));
-        shadow->Draw();
-        player->Draw();
+        currentLevel->Draw(ResourceManager::GetShader("gritty"));
+        light->Draw(ResourceManager::GetShader("gritty"));
+        shadow->Draw(ResourceManager::GetShader("gritty"));
+        player->Draw(ResourceManager::GetShader("gritty"));
 
-        if (pixelate)
-            pixelator->EndRender();
+        if (debugViz)
+        {
+            currentLevel->Draw(ResourceManager::GetShader("normalizer"));
+            light->Draw(ResourceManager::GetShader("normalizer"));
+            shadow->Draw(ResourceManager::GetShader("normalizer"));
+            player->Draw(ResourceManager::GetShader("normalizer"));
+        }
+
     }
+
+    if (pixelate)
+        pixelator->EndRender();
 
     if (State == GAME_PAUSED)
     {
@@ -324,24 +349,24 @@ void Game::updateCamera()
     camPosition = player->Position + glm::vec3(0.0f, 2.0f, 2.0f);
     glm::mat4 perspective = glm::perspective(glm::radians(80.0f), static_cast<GLfloat>(windowWidth) / static_cast<GLfloat>(windowHeight), 0.1f, 100.0f);
     glm::mat4 view;
-    glm::vec3 playerPos;
-    glm::vec3 lightColor = glm::vec3(0.5f, 0.25f, 0.0f);
+    glm::vec3 playerLightPos = light->Position;
+    glm::vec3 lightColor = glm::vec3(0.7f, 0.1f, 0.0f);
 
     if (freeCam)
-    {
         view = freeCamera->GetViewMatrix();
-        playerPos = freeCamera->Position;
-    }
     else
-    {
         view = glm::lookAt(camPosition, player->Position, glm::vec3(0.0f, 1.0f, 0.0f));
-        playerPos = glm::vec3(player->Position.x + 0.2f, 0.5f, player->Position.z + 0.2f);
-    }
 
     ResourceManager::GetShader("gritty").Use().SetInteger("freeCam", freeCam);
     ResourceManager::GetShader("gritty").Use().SetInteger("retro", retro);
     ResourceManager::GetShader("gritty").Use().SetMatrix4("view", view);
     ResourceManager::GetShader("gritty").Use().SetMatrix4("projection", perspective);
-    ResourceManager::GetShader("gritty").Use().SetVector3f("playerPos", playerPos);
+    ResourceManager::GetShader("gritty").Use().SetVector3f("playerLightPos", playerLightPos);
     ResourceManager::GetShader("gritty").Use().SetVector3f("lightColor", lightColor);
+
+    if (debugViz)
+    {
+        ResourceManager::GetShader("normalizer").Use().SetMatrix4("view", view);
+        ResourceManager::GetShader("normalizer").Use().SetMatrix4("projection", perspective);
+    }
 }

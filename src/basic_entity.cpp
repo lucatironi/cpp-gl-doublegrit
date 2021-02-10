@@ -1,11 +1,10 @@
 #include "basic_entity.hpp"
 
-BasicEntity::BasicEntity(glm::vec3 position, glm::vec3 size, Texture2D texture, Shader shader) :
+BasicEntity::BasicEntity(glm::vec3 position, glm::vec3 size, Texture2D texture) :
     Position(position),
     size(size),
     rotation(0.0f),
-    texture(texture),
-    shader(shader)
+    texture(texture)
 {
    initRenderData();
 }
@@ -20,7 +19,7 @@ void BasicEntity::Update(GLfloat deltaTime)
    
 }
 
-void BasicEntity::Draw()
+void BasicEntity::Draw(Shader shader)
 {
     // Prepare transformations
     glm::mat4 modelMat = glm::mat4(1.0f);

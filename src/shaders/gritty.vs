@@ -11,48 +11,54 @@ struct Light {
     float attenuation;
 };
 
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-
-uniform vec3 playerPos;
-uniform vec3 lightColor;
-uniform Light lights[32];
+const int MAX_LIGHTS = 32;
+const int MAX_BONES = 100;
 
 uniform bool entity;
 uniform bool animated;
 
-const int MAX_BONES = 100;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
+uniform vec3 playerLightPos;
+uniform vec3 lightColor;
+uniform Light lights[MAX_LIGHTS];
 uniform mat4 gBones[MAX_BONES];
 
+out vec3 FragPos;
 out vec3 VertexLight;
 out vec2 TexCoords;
 
 void main()
 {
     // ambient
-    vec3 ambient = vec3(0.4, 0.3, 0.3);
+    vec3 ambient = vec3(0.0);
 
     // diffuse
-    vec3 norm = normalize(aNormal);
-    vec3 lightDir = normalize(playerPos - aPos);
+    vec3 normal = normalize(aNormal);
+    vec3 lightDir = normalize(playerLightPos - aPos);
     float diffuse = max(dot(aNormal, lightDir), 0.0);
 
     // attenuation
-    float distance = length(playerPos - aPos);
-    float attenuation = 1.0 / (0.05 * distance);
+    float constantAtt = 0.2;
+    float linearAtt = 0.09;
+    float quadraticAtt = 0.032;
+    float distance = length(playerLightPos - aPos);
+    float attenuation = 1.0 / (constantAtt + linearAtt * distance + quadraticAtt * (distance * distance));
 
     // combine
-    VertexLight = ambient + lightColor * diffuse * attenuation;
+    VertexLight = ambient + (lightColor * attenuation) + (diffuse * attenuation);
 
-    for (int i = 0; i < lights.length(); i++)
-    {
-        if (lights[i].position.x == 0.0f)
-            break;
-        vec3 lightPos = lights[i].position;
-        VertexLight += lights[i].color * max(dot(aNormal, normalize(lightPos - aPos)), 0.0) * (1.0 / (lights[i].attenuation * (length(lightPos - aPos))));
-    }
+    // for (int i = 0; i < lights.length(); i++)
+    // {
+    //     if (lights[i].position.x == 0.0f)
+    //         break;
+    //     vec3 lightPos = lights[i].position;
+    //     VertexLight += lights[i].color * 
+    //                    max(dot(aNormal, normalize(lightPos - aPos)), 0.0) * 
+    //                    (1.0 / (lights[i].attenuation * length(lightPos - aPos)));
+    // }
 
     TexCoords = aTexCoords;
 

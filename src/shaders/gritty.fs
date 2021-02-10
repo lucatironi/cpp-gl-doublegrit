@@ -11,7 +11,7 @@ uniform bool retro;
 void main()
 {
     vec4 tex = texture(image, TexCoords);
-    FragColor = tex * vec4(VertexLight, 1.0);
+    FragColor = vec4(VertexLight, 1.0);
 
     if (!freeCam)
     {

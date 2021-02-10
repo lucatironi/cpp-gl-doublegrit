@@ -58,9 +58,10 @@ class Game
         TextRenderer   *textRenderer;
         ISoundEngine   *soundEngine;
 
-        Camera         *freeCamera;
         glm::vec3      camPosition;
+        Camera         *freeCamera;
         PlayerEntity   *player;
+        BasicEntity    *light;
         Shadow         *shadow;
         Level          *currentLevel;
 

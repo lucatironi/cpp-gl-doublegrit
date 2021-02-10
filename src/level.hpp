@@ -20,12 +20,12 @@ struct Light
 class Level
 {
     public:
-        Level(const GLchar* file, Shader shader);
+        Level(const GLchar* file, Texture2D texture);
         ~Level();
 
         glm::vec3 PlayerStartPosition;
 
-        void Draw(Texture2D texture);
+        void Draw(Shader shader);
         GLboolean HasWallAt(GLfloat x, GLfloat z);
 
     private:
@@ -35,8 +35,8 @@ class Level
         int levelWidth, levelHeight;
         unsigned char *levelData;
 
-        Shader shader;
         GLuint VAO;
+        Texture2D texture;
         std::vector<GLfloat> vertices;
         std::vector<Light> lights;
 

@@ -1,6 +1,6 @@
 #include "player_entity.hpp"
 
-PlayerEntity::PlayerEntity(glm::vec3 position, glm::vec3 size, Texture2D texture, Shader shader, AnimatedModel model) :
+PlayerEntity::PlayerEntity(glm::vec3 position, glm::vec3 size, Texture2D texture, AnimatedModel model) :
     Position(position),
     size(size),
     direction(NORTH),
@@ -8,7 +8,6 @@ PlayerEntity::PlayerEntity(glm::vec3 position, glm::vec3 size, Texture2D texture
     acceleration(glm::vec3(0.0f)),
     velocity(glm::vec3(0.0f)),
     texture(texture),
-    shader(shader),
     model(model)
 {
 }
@@ -91,7 +90,7 @@ void PlayerEntity::Update(GLfloat deltaTime)
         running ? model.SetAnimation(RUN) : model.SetAnimation(WALK);
 }
 
-void PlayerEntity::Draw()
+void PlayerEntity::Draw(Shader shader)
 {
     // Prepare transformations
     glm::mat4 modelMat = glm::mat4(1.0f);

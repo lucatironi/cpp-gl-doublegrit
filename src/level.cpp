@@ -2,7 +2,7 @@
 
 #include <stb_image.h>
 
-Level::Level(const GLchar *file, Shader shader) : shader(shader)
+Level::Level(const GLchar *file, Texture2D texture) : texture(texture)
 {
     load(file);
     initRenderData();
@@ -14,9 +14,10 @@ Level::~Level()
     glDeleteVertexArrays(1, &VAO);
 }
 
-void Level::Draw(Texture2D texture)
+void Level::Draw(Shader shader)
 {
     shader.Use();
+    shader.SetMatrix4("model", glm::mat4(1.0f));
 
     for (unsigned int i = 0; i < lights.size(); i++)
     {
@@ -32,6 +33,7 @@ void Level::Draw(Texture2D texture)
     glDrawArrays(GL_TRIANGLES, 0, vertices.size());
     glBindVertexArray(0);
 }
+
 GLboolean Level::HasWallAt(GLfloat x, GLfloat z)
 {
     return tileAt(x, z) == 128;

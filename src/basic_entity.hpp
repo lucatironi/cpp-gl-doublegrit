@@ -13,17 +13,16 @@ class BasicEntity
     public:
         glm::vec3 Position;
 
-        BasicEntity(glm::vec3 position, glm::vec3 size, Texture2D texture, Shader shader);
+        BasicEntity(glm::vec3 position, glm::vec3 size, Texture2D texture);
         ~BasicEntity();
 
         void Update(GLfloat deltatime);
-        void Draw();
+        void Draw(Shader shader);
 
     private:
         glm::vec3 size;
         GLfloat rotation;
         Texture2D texture;
-        Shader shader;
         GLuint VAO;
 
         void initRenderData();

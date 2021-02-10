@@ -13,12 +13,11 @@ class Shadow
     public:
         glm::vec3 Position;
 
-        Shadow(glm::vec3 position, glm::vec3 size, Texture2D texture, Shader shader) :
+        Shadow(glm::vec3 position, glm::vec3 size, Texture2D texture) :
             Position(position),
             size(size),
             rotation(0.0f),
-            texture(texture),
-            shader(shader)
+            texture(texture)
         {
             // Configure VAO/VBO
             GLuint VBO;
@@ -62,7 +61,7 @@ class Shadow
         {
         }
 
-        void Draw()
+        void Draw(Shader shader)
         {
             // Prepare transformations
             glm::mat4 modelMat = glm::mat4(1.0f);
@@ -92,7 +91,6 @@ class Shadow
         glm::vec3 size;
         GLfloat rotation;
         Texture2D texture;
-        Shader shader;
         GLuint VAO;
 };
 

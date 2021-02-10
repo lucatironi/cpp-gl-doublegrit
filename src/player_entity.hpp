@@ -57,7 +57,7 @@ class PlayerEntity
     public:
         glm::vec3 Position;
 
-        PlayerEntity(glm::vec3 position, glm::vec3 size, Texture2D texture, Shader shader, AnimatedModel model);
+        PlayerEntity(glm::vec3 position, glm::vec3 size, Texture2D texture, AnimatedModel model);
         ~PlayerEntity();
 
         void Move(PlayerDirection direction, GLboolean running = false);
@@ -65,7 +65,7 @@ class PlayerEntity
         void Stop(PlayerAxis);
 
         void Update(GLfloat deltatime);
-        void Draw();
+        void Draw(Shader shader);
 
     private:
         GLboolean running = false;
@@ -73,7 +73,6 @@ class PlayerEntity
         GLfloat rotation;
         PlayerDirection direction;
         glm::vec3 acceleration, velocity;
-        Shader shader;
         Texture2D texture;
         AnimatedModel model;
 };
