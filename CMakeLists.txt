@@ -26,6 +26,7 @@ include_directories(src/
                     vendor/glad/include/
                     vendor/glfw/include/
                     vendor/glm/
+                    vendor/imgui/
                     vendor/irrKlang/include/
                     vendor/stb/)
 
@@ -44,6 +45,8 @@ set_target_properties(irrKlang PROPERTIES IMPORTED_LOCATION ${irrKlang_location}
 
 find_package(Freetype REQUIRED)
 include_directories(${FREETYPE_INCLUDE_DIRS})
+
+add_subdirectory(vendor/imgui)
 
 file(GLOB VENDORS_SOURCES vendor/glad/src/glad.c)
 file(GLOB PROJECT_HEADERS src/*.hpp)
@@ -65,7 +68,7 @@ add_definitions(-DGLFW_INCLUDE_NONE
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${PROJECT_HEADERS}
                                ${PROJECT_SHADERS} ${PROJECT_CONFIGS}
                                ${VENDORS_SOURCES})
-target_link_libraries(${PROJECT_NAME} assimp glfw irrKlang
+target_link_libraries(${PROJECT_NAME} assimp glfw irrKlang imgui
                       ${GLFW_LIBRARIES} ${GLAD_LIBRARIES} ${FREETYPE_LIBRARIES})
 set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${PROJECT_NAME})
