@@ -36,22 +36,22 @@ void main()
     vec4 worldPos;
     if (entity)
     {
-        mat4 BoneTransform  = gBones[aBoneIDs[0]] * aWeights[0];
-             BoneTransform += gBones[aBoneIDs[1]] * aWeights[1];
-             BoneTransform += gBones[aBoneIDs[2]] * aWeights[2];
-             BoneTransform += gBones[aBoneIDs[3]] * aWeights[3];
-
-        vec4 pos = BoneTransform * vec4(aPos, 1.0);
-
         if (animated)
-            worldPos = model * pos;
+        {
+            mat4 BoneTransform  = gBones[aBoneIDs[0]] * aWeights[0];
+                 BoneTransform += gBones[aBoneIDs[1]] * aWeights[1];
+                 BoneTransform += gBones[aBoneIDs[2]] * aWeights[2];
+                 BoneTransform += gBones[aBoneIDs[3]] * aWeights[3];
+
+            vec4 tPos = BoneTransform * vec4(aPos, 1.0);
+            worldPos = model * tPos;
+        }
         else
             worldPos = model * vec4(aPos, 1.0);
     }
     else
-    {
         worldPos = vec4(aPos, 1.0);
-    }
+
     gl_Position = projection * view * worldPos;
 
     // ambient
