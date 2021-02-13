@@ -23,6 +23,9 @@ uniform mat4 projection;
 
 uniform vec3 playerLightPos;
 uniform vec3 lightColor;
+uniform float linearAtt;
+uniform float constantAtt;
+uniform float quadraticAtt;
 uniform Light lights[MAX_LIGHTS];
 uniform mat4 gBones[MAX_BONES];
 
@@ -67,18 +70,15 @@ void main()
     TexCoords = aTexCoords;
 }
 
-
 vec3 CalcPointLight(vec3 lightPos, vec3 vertexPos, vec3 lightColor)
 {
-    // attenuation
-    float constantAtt = 0.0;
-    float linearAtt = 0.7;
-    float quadraticAtt = 0.3;
-
+    float attenuation = 0.0001;
     vec3 normal = normalize(aNormal);
     vec3 lightDir = normalize(lightPos - vertexPos);
     float diffuse = max(dot(normal, lightDir), 0.0);
     float distance = length(lightPos -  vertexPos);
-    float attenuation = 1.0 / (constantAtt + linearAtt * distance + quadraticAtt * (distance * distance));
+    if (distance < 6)
+        attenuation = 1.0 / (constantAtt + linearAtt * distance + quadraticAtt * (distance * distance));
+
     return (lightColor * attenuation) + (diffuse * attenuation);
 }

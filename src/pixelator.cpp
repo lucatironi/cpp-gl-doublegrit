@@ -42,6 +42,14 @@ Pixelator::~Pixelator()
 {
 }
 
+void Pixelator::SetFramebufferSize(GLuint windowWidth, GLuint windowHeight, GLuint framebufferWidth, GLuint framebufferHeight)
+{
+    this->windowWidth = windowWidth;
+    this->windowHeight = windowHeight;
+    this->framebufferWidth = framebufferWidth;
+    this->framebufferHeight = framebufferHeight;
+}
+
 void Pixelator::BeginRender()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, FBO);

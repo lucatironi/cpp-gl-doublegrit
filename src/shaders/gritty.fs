@@ -18,8 +18,4 @@ void main()
         float distance = gl_FragCoord.z / gl_FragCoord.w;
         FragColor.rgb *= smoothstep(10.0, 0.1, distance);
     }
-    if (retro)
-    {
-        FragColor.rgb = floor(FragColor.rgb * 6.35) / 6.35;
-    }
 }

@@ -34,7 +34,7 @@ class Game
         GLboolean Keys[1024];
         GLboolean KeysProcessed[1024];
 
-        Game(GLFWwindow *window, GLuint windowWidth, GLuint windowHeight, GLuint framebufferWidth, GLuint framebufferHeight);
+        Game(GLFWwindow* window, GLuint windowWidth, GLuint windowHeight, GLuint framebufferWidth, GLuint framebufferHeight);
         ~Game();
 
         void Init();
@@ -47,6 +47,8 @@ class Game
 
         void Update(GLfloat deltaTime);
         void Render(GLfloat deltaTime);
+
+        void SetFramebufferSize(GLuint windowWidth, GLuint windowHeight, GLuint framebufferWidth, GLuint framebufferHeight);
 
     private:
         GLFWwindow *window;
@@ -67,6 +69,8 @@ class Game
 
         void initPlayer();
         void updateCamera();
+        void showGameStatsOverlay(bool* pOpen, GLfloat deltaTime);
+        void showGameEditorWindow(bool* pOpen);
 };
 
 #endif

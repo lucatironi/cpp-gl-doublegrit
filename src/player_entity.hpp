@@ -60,19 +60,20 @@ class PlayerEntity
         PlayerEntity(glm::vec3 position, glm::vec3 size, Texture2D texture, AnimatedModel model);
         ~PlayerEntity();
 
-        void Move(PlayerDirection direction, GLboolean running = false);
+        void Move(PlayerDirection direction);
         void Jump();
+        void ToggleWalk();
         void Stop(PlayerAxis);
 
         void Update(GLfloat deltatime);
         void Draw(Shader shader);
 
     private:
-        GLboolean running = false;
         glm::vec3 size;
         GLfloat rotation;
         PlayerDirection direction;
         glm::vec3 acceleration, velocity;
+        GLboolean running;
         Texture2D texture;
         AnimatedModel model;
 };

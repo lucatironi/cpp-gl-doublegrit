@@ -2,14 +2,20 @@
 #include <iostream>
 #include <iomanip>
 
+#include <imgui.h>
+
 #include "game.hpp"
 
 bool pixelate = true;
-bool retro = false;
 bool freeCam = false;
-bool showStats = true;
 bool debugViz = false;
-bool running = true;
+bool showGameStats = false;
+bool showGameEditor = false;
+
+static float constantAtt = 0.3f;
+static float linearAtt = 0.13f;
+static float quadraticAtt = 0.68f;
+static glm::vec3 lightColor = glm::vec3(0.7f, 0.1f, 0.0f);
 
 Game::Game(GLFWwindow *window, GLuint windowWidth, GLuint windowHeight, GLuint framebufferWidth, GLuint framebufferHeight)
     : State(GAME_MENU),
@@ -36,6 +42,18 @@ Game::~Game()
     delete freeCamera;
     delete currentLevel;
     soundEngine->drop();
+}
+
+void Game::SetFramebufferSize(GLuint windowWidth, GLuint windowHeight, GLuint framebufferWidth, GLuint framebufferHeight)
+{
+    this->windowWidth = windowWidth;
+    this->windowHeight = windowHeight;
+    this->framebufferWidth = framebufferWidth;
+    this->framebufferHeight = framebufferHeight;
+
+    updateCamera();
+
+    pixelator->SetFramebufferSize(windowWidth, windowHeight, framebufferWidth, framebufferHeight);
 }
 
 void Game::Init()
@@ -85,6 +103,11 @@ void Game::Reset()
 
 void Game::DoTheMainLoop(GLfloat deltaTime)
 {
+    if (showGameStats)
+        showGameStatsOverlay(&showGameStats, deltaTime);
+    if (showGameEditor)
+        showGameEditorWindow(&showGameEditor);
+
     ProcessInput(deltaTime);
     Update(deltaTime);
     Render(deltaTime);
@@ -154,20 +177,20 @@ void Game::ProcessInput(GLfloat deltaTime)
         {
             if (Keys[GLFW_KEY_W] && !Keys[GLFW_KEY_S])
                 if (!Keys[GLFW_KEY_A] && !Keys[GLFW_KEY_D])
-                    player->Move(NORTH, running);
+                    player->Move(NORTH);
                 else if (Keys[GLFW_KEY_A] && !Keys[GLFW_KEY_D])
-                    player->Move(NW, running);
+                    player->Move(NW);
                 else if (Keys[GLFW_KEY_D] && !Keys[GLFW_KEY_A])
-                    player->Move(NE, running);
+                    player->Move(NE);
                 else
                     player->Stop(LATERAL);
             else if (Keys[GLFW_KEY_S] && !Keys[GLFW_KEY_W])
                 if (!Keys[GLFW_KEY_A] && !Keys[GLFW_KEY_D])
-                    player->Move(SOUTH, running);
+                    player->Move(SOUTH);
                 else if (Keys[GLFW_KEY_A] && !Keys[GLFW_KEY_D])
-                    player->Move(SW, running);
+                    player->Move(SW);
                 else if (Keys[GLFW_KEY_D] && !Keys[GLFW_KEY_A])
-                    player->Move(SE, running);
+                    player->Move(SE);
                 else
                     player->Stop(LATERAL);
             else
@@ -175,20 +198,20 @@ void Game::ProcessInput(GLfloat deltaTime)
 
             if (Keys[GLFW_KEY_A] && !Keys[GLFW_KEY_D])
                 if (!Keys[GLFW_KEY_W] && !Keys[GLFW_KEY_S])
-                    player->Move(WEST, running);
+                    player->Move(WEST);
                 else if (Keys[GLFW_KEY_W] && !Keys[GLFW_KEY_S])
-                    player->Move(NW, running);
+                    player->Move(NW);
                 else if (Keys[GLFW_KEY_S] && !Keys[GLFW_KEY_W])
-                    player->Move(SW, running);
+                    player->Move(SW);
                 else
                     player->Stop(LONGITUDINAL);
             else if (Keys[GLFW_KEY_D] && !Keys[GLFW_KEY_A])
                 if (!Keys[GLFW_KEY_W] && !Keys[GLFW_KEY_S])
-                    player->Move(EAST, running);
+                    player->Move(EAST);
                 else if (Keys[GLFW_KEY_W] && !Keys[GLFW_KEY_S])
-                    player->Move(NE, running);
+                    player->Move(NE);
                 else if (Keys[GLFW_KEY_S] && !Keys[GLFW_KEY_W])
-                    player->Move(SE, running);
+                    player->Move(SE);
                 else
                     player->Stop(LONGITUDINAL);
             else
@@ -201,10 +224,10 @@ void Game::ProcessInput(GLfloat deltaTime)
             player->Jump();
             KeysProcessed[GLFW_KEY_SPACE] = GL_TRUE;
         }
-        // C Toggle running
+        // C Toggle walk
         if (Keys[GLFW_KEY_C] && !KeysProcessed[GLFW_KEY_C])
         {
-            running = !running;
+            player->ToggleWalk();
             KeysProcessed[GLFW_KEY_C] = GL_TRUE;
         }
         // ESC pauses game
@@ -220,28 +243,28 @@ void Game::ProcessInput(GLfloat deltaTime)
             pixelate = !pixelate;
             KeysProcessed[GLFW_KEY_1] = GL_TRUE;
         }
-        // 2 Toggle retro look (256 color palette)
+        // 2 Toggle free camera
         if (Keys[GLFW_KEY_2] && !KeysProcessed[GLFW_KEY_2])
         {
-            retro = !retro;
+            freeCam = !freeCam;
             KeysProcessed[GLFW_KEY_2] = GL_TRUE;
         }
-        // 3 Toggle free camera
+        // 3 Toggle debug visualization
         if (Keys[GLFW_KEY_3] && !KeysProcessed[GLFW_KEY_3])
         {
-            freeCam = !freeCam;
+            debugViz = !debugViz;
             KeysProcessed[GLFW_KEY_3] = GL_TRUE;
         }
-        // 4 Toggle stats
+        // 4 Toggle stats overlay
         if (Keys[GLFW_KEY_4] && !KeysProcessed[GLFW_KEY_4])
         {
-            showStats = !showStats;
+            showGameStats = !showGameStats;
             KeysProcessed[GLFW_KEY_4] = GL_TRUE;
         }
-        // 5 Toggle stats
+        // 5 Toggle editor window
         if (Keys[GLFW_KEY_5] && !KeysProcessed[GLFW_KEY_5])
         {
-            debugViz = !debugViz;
+            showGameEditor = !showGameEditor;
             KeysProcessed[GLFW_KEY_5] = GL_TRUE;
         }
     }
@@ -298,14 +321,12 @@ void Game::Render(GLfloat deltaTime)
     {
 
         currentLevel->Draw(ResourceManager::GetShader("gritty"));
-        light->Draw(ResourceManager::GetShader("gritty"));
         shadow->Draw(ResourceManager::GetShader("gritty"));
         player->Draw(ResourceManager::GetShader("gritty"));
 
         if (debugViz)
         {
             currentLevel->Draw(ResourceManager::GetShader("normalizer"));
-            light->Draw(ResourceManager::GetShader("normalizer"));
             shadow->Draw(ResourceManager::GetShader("normalizer"));
             player->Draw(ResourceManager::GetShader("normalizer"));
         }
@@ -321,21 +342,11 @@ void Game::Render(GLfloat deltaTime)
         textRenderer->RenderText("PRESS ENTER TO CONTINUE", windowWidth / 2.0f - 190.0f, windowHeight / 2.0f - 20.0f, 1.0f);
         textRenderer->RenderText("PRESS ESC TO EXIT TO MENU", windowWidth / 2.0f - 210.0f, windowHeight / 2.0f + 10.0f, 1.0f);
     }
+
     if (State == GAME_MENU)
     {
         textRenderer->RenderText("PRESS ENTER TO START", windowWidth / 2.0f - 150.0f, windowHeight / 2.0f - 20.0f, 1.0f);
         textRenderer->RenderText("PRESS ESC TO QUIT", windowWidth / 2.0f - 120.0f, windowHeight / 2.0f + 10.0f, 1.0f);
-    }
-    if (showStats)
-    {
-        // Render FPS counter and player position
-        std::stringstream stats;
-        stats << std::fixed << std::setprecision(1)
-                    << "x:" << player->Position.x
-                    << " y:" << player->Position.y
-                    << " z:" << player->Position.z
-                    << " fps:" << (int)(1 / deltaTime);
-        textRenderer->RenderText(stats.str(), windowWidth - 220.0f, 5.0f, 0.5f);
     }
 }
 
@@ -346,11 +357,13 @@ void Game::initPlayer()
 
 void Game::updateCamera()
 {
+    glm::mat4 ortho = glm::ortho(0.0f, static_cast<GLfloat>(windowWidth), static_cast<GLfloat>(windowHeight), 0.0f, -1.0f, 1.0f);
+    ResourceManager::GetShader("text").Use().SetMatrix4("projection", ortho);
+
     camPosition = player->Position + glm::vec3(0.0f, 2.0f, 2.0f);
     glm::mat4 perspective = glm::perspective(glm::radians(80.0f), static_cast<GLfloat>(windowWidth) / static_cast<GLfloat>(windowHeight), 0.1f, 100.0f);
     glm::mat4 view;
     glm::vec3 playerLightPos = light->Position;
-    glm::vec3 lightColor = glm::vec3(0.7f, 0.1f, 0.0f);
 
     if (freeCam)
         view = freeCamera->GetViewMatrix();
@@ -358,15 +371,66 @@ void Game::updateCamera()
         view = glm::lookAt(camPosition, player->Position, glm::vec3(0.0f, 1.0f, 0.0f));
 
     ResourceManager::GetShader("gritty").Use().SetInteger("freeCam", freeCam);
-    ResourceManager::GetShader("gritty").Use().SetInteger("retro", retro);
     ResourceManager::GetShader("gritty").Use().SetMatrix4("view", view);
     ResourceManager::GetShader("gritty").Use().SetMatrix4("projection", perspective);
     ResourceManager::GetShader("gritty").Use().SetVector3f("playerLightPos", playerLightPos);
     ResourceManager::GetShader("gritty").Use().SetVector3f("lightColor", lightColor);
+    ResourceManager::GetShader("gritty").Use().SetFloat("constantAtt", constantAtt);
+    ResourceManager::GetShader("gritty").Use().SetFloat("linearAtt", linearAtt);
+    ResourceManager::GetShader("gritty").Use().SetFloat("quadraticAtt", quadraticAtt);
 
     if (debugViz)
     {
         ResourceManager::GetShader("normalizer").Use().SetMatrix4("view", view);
         ResourceManager::GetShader("normalizer").Use().SetMatrix4("projection", perspective);
     }
+}
+
+void Game::showGameStatsOverlay(bool* pOpen, GLfloat deltaTime)
+{
+    const float PAD = 10.0f;
+    ImVec2 windowPos, windowPosPivot;
+    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoMove |
+                                   ImGuiWindowFlags_NoDecoration |
+                                   ImGuiWindowFlags_AlwaysAutoResize |
+                                   ImGuiWindowFlags_NoSavedSettings |
+                                   ImGuiWindowFlags_NoFocusOnAppearing |
+                                   ImGuiWindowFlags_NoNav;
+
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+    windowPos.x = viewport->WorkPos.x + viewport->WorkSize.x - PAD;
+    windowPos.y = viewport->WorkPos.y + PAD;
+    windowPosPivot.x = 1.0f;
+    windowPosPivot.y = 0.0f;
+
+    ImGui::SetNextWindowPos(windowPos, ImGuiCond_Always, windowPosPivot);
+    ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+
+    if (ImGui::Begin("Doublegrit Stats", pOpen, windowFlags))
+    {
+        ImGui::Text("Player Position: x:%.1f, y:%.1f, z:%.1f", player->Position.x, player->Position.y, player->Position.z);
+        ImGui::Text("FPS: %i", (int)(1 / deltaTime));
+    }
+    ImGui::End();
+}
+
+void Game::showGameEditorWindow(bool* pOpen)
+{
+    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoFocusOnAppearing;
+
+    if (ImGui::Begin("Light Values", pOpen, windowFlags))
+    {
+        ImGui::Separator();
+        ImGui::SliderFloat("contant", &constantAtt, 0.0, 1.0);
+        ImGui::SliderFloat("linear", &linearAtt, 0.0, 1.0);
+        ImGui::SliderFloat("quadratic", &quadraticAtt, 0.0, 1.0);
+        static float color[3] = { lightColor.r, lightColor.g, lightColor.b };
+        ImGui::ColorEdit3("color", color);
+        lightColor = glm::vec3(color[0], color[1], color[2]);
+        ResourceManager::GetShader("gritty").Use().SetFloat("constantAtt", constantAtt);
+        ResourceManager::GetShader("gritty").Use().SetFloat("linearAtt", linearAtt);
+        ResourceManager::GetShader("gritty").Use().SetFloat("quadraticAtt", quadraticAtt);
+        ResourceManager::GetShader("gritty").Use().SetVector3f("lightColor", lightColor);
+    }
+    ImGui::End();
 }

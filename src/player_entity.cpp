@@ -3,10 +3,11 @@
 PlayerEntity::PlayerEntity(glm::vec3 position, glm::vec3 size, Texture2D texture, AnimatedModel model) :
     Position(position),
     size(size),
-    direction(NORTH),
     rotation(NORTH * 45.0f),
+    direction(NORTH),
     acceleration(glm::vec3(0.0f)),
     velocity(glm::vec3(0.0f)),
+    running(GL_TRUE),
     texture(texture),
     model(model)
 {
@@ -16,10 +17,9 @@ PlayerEntity::~PlayerEntity()
 {
 }
 
-void PlayerEntity::Move(PlayerDirection direction, GLboolean running)
+void PlayerEntity::Move(PlayerDirection direction)
 {
     this->direction = direction;
-    this->running = running;
 
     GLfloat acc = running ? PLAYER_ACCELERATION * 3.0f : PLAYER_ACCELERATION;
 
@@ -62,6 +62,11 @@ void PlayerEntity::Jump()
 {
     if (Position.y == 0.0f) // jump only when on the ground
         velocity.y = PLAYER_JUMP_VELOCITY;
+}
+
+void PlayerEntity::ToggleWalk()
+{
+    running = !running;
 }
 
 void PlayerEntity::Stop(PlayerAxis axis)

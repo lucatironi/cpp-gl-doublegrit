@@ -15,6 +15,8 @@ class Pixelator
         void EndRender();
         void Render(GLfloat time);
 
+        void SetFramebufferSize(GLuint windowWidth, GLuint windowHeight, GLuint framebufferWidth, GLuint framebufferHeight);
+
     private:
         GLuint windowWidth, windowHeight, framebufferWidth, framebufferHeight;
         GLuint FBO, colorRBO, depthRBO; // framebuffer, color and depth renderbuffers
